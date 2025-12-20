@@ -19,10 +19,12 @@
     "build:grammar": "peggy --format es -o src/grammar.js src/grammar.pegjs",
     "build:ts": "tsc",
     "build": "npm run build:grammar && npm run build:ts",
-    "clean": "rm -rf dist src/grammar.js"
+    "clean": "rm -rf dist src/grammar.js",
+    "test": "node --import tsx --test 'test/**/*.test.ts'"
   },
   "devDependencies": {
     "peggy": "^4.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.0"
   },
   "keywords": [
