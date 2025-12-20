@@ -25,7 +25,7 @@ export type ASTNode =
   | ["block", ASTNode[]]
   | ["restoreStartPosition"]
   | ["setTrack", number]
-  | ["cleff", string]
+  | ["clef", string]
   | ["macro", string]
 
 export type AST = ASTNode[]
@@ -145,14 +145,14 @@ export default class SongParser {
           state.currentTrack = +track
           break
         }
-        case "cleff": {
-          const [, cleff] = command
+        case "clef": {
+          const [, clef] = command
           const track = song.getTrack(state.currentTrack)
-          if (!track.cleffs) {
-            track.cleffs = []
+          if (!track.clefs) {
+            track.clefs = []
           }
 
-          track.cleffs.push([state.position, cleff])
+          track.clefs.push([state.position, clef])
           break
         }
         case "note": {

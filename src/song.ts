@@ -65,7 +65,7 @@ export class SongNoteList extends Array<SongNote> {
 
   metadata?: SongMetadata
   autoChords?: [number, [string, string]][]
-  cleffs?: [number, string][]
+  clefs?: [number, string][]
   trackName?: string
 
   private buckets?: Record<number, number[]>
@@ -151,12 +151,12 @@ export class SongNoteList extends Array<SongNote> {
   }
 
   fittingStaff(): "treble" | "bass" | "grand" {
-    if (this.cleffs && this.cleffs.length == 1) {
+    if (this.clefs && this.clefs.length == 1) {
       const firstNote = this[0]
       // it is at the start
-      if (!firstNote || firstNote.getStart() >= this.cleffs[0][0]) {
+      if (!firstNote || firstNote.getStart() >= this.clefs[0][0]) {
         // return the staff that was assigned
-        switch (this.cleffs[0][1]) {
+        switch (this.clefs[0][1]) {
           case "f":
             return "bass"
           case "g":

@@ -225,8 +225,8 @@ function peg$parse(input, options) {
   function peg$f3(track) {
     return ["setTrack", +track]
   }
-  function peg$f4(cleff) {
-    return ["cleff", cleff.toLowerCase()]
+  function peg$f4(clef) {
+    return ["clef", clef.toLowerCase()]
   }
   function peg$f5(name) {
     return ["macro", name.join("")]
@@ -545,7 +545,7 @@ function peg$parse(input, options) {
                         if (s0 === peg$FAILED) {
                           s0 = peg$parsemacro();
                           if (s0 === peg$FAILED) {
-                            s0 = peg$parsesetCleff();
+                            s0 = peg$parsesetClef();
                           }
                         }
                       }
@@ -790,7 +790,7 @@ function peg$parse(input, options) {
     return s0;
   }
 
-  function peg$parsesetCleff() {
+  function peg$parsesetClef() {
     let s0, s1, s2;
 
     s0 = peg$currPos;

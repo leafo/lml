@@ -329,25 +329,25 @@ describe("parse", () => {
   describe("clefs", () => {
     it("parses treble clef", () => {
       assert.deepStrictEqual(parser.parse("/g"), [
-        ["cleff", "g"]
+        ["clef", "g"]
       ])
     })
 
     it("parses bass clef", () => {
       assert.deepStrictEqual(parser.parse("/f"), [
-        ["cleff", "f"]
+        ["clef", "f"]
       ])
     })
 
     it("parses alto clef", () => {
       assert.deepStrictEqual(parser.parse("/c"), [
-        ["cleff", "c"]
+        ["clef", "c"]
       ])
     })
 
     it("parses uppercase clef", () => {
       assert.deepStrictEqual(parser.parse("/G"), [
-        ["cleff", "g"]
+        ["clef", "g"]
       ])
     })
   })
@@ -903,14 +903,14 @@ describe("load", () => {
   describe("clefs", () => {
     it("records clef on track", () => {
       const song = SongParser.load("/g c5")
-      assert.deepStrictEqual(song.tracks[0].cleffs, [
+      assert.deepStrictEqual(song.tracks[0].clefs, [
         [0, "g"]
       ])
     })
 
     it("records bass clef", () => {
       const song = SongParser.load("/f c3")
-      assert.deepStrictEqual(song.tracks[0].cleffs, [
+      assert.deepStrictEqual(song.tracks[0].clefs, [
         [0, "f"]
       ])
     })
