@@ -1,0 +1,248 @@
+# @leafo/lml
+
+LML (Leaf's Music Language) is a text-based notation for writing music. It's designed to be easy to write by hand and parse programmatically.
+
+WARNING: this is work in progress, expect interfaces to change. This was created for use in <https://sightreading.training>.
+
+## Installation
+
+```bash
+npm install @leafo/lml
+```
+
+## Usage
+
+```typescript
+import SongParser from "@leafo/lml"
+
+// Parse and compile LML to a song
+const song = SongParser.load(`
+  ks0 ts4/4
+  c5 d5 e5 f5
+  g5.2 g5.2
+`)
+
+// Access the notes
+for (const note of song) {
+  console.log(`${note.note} at beat ${note.start} for ${note.duration} beats`)
+}
+
+// Access metadata
+console.log(song.metadata.keySignature)  // 0
+console.log(song.metadata.beatsPerMeasure)  // 4
+```
+
+### Two-phase parsing
+
+```typescript
+import SongParser from "@leafo/lml"
+
+const parser = new SongParser()
+
+// Phase 1: Parse text to AST
+const ast = parser.parse("c5 d5 e5")
+// [["note", "C5"], ["note", "D5"], ["note", "E5"]]
+
+// Phase 2: Compile AST to song
+const song = parser.compile(ast)
+```
+
+## LML Syntax
+
+### Notes
+
+A note is written as the note name followed by the octave. Notes are placed sequentially and must be separated by whitespace.
+
+```
+c5 d5 e5
+```
+
+A duration multiplier can be specified by appending a period and a number. The default duration is 1 beat.
+
+```
+c5.2 d5 d5 e5.4
+```
+
+Notes can be made sharp with `+`, flat with `-`, or natural with `=`. These modifiers appear after the note name but before the octave.
+
+```
+c+5 c-5 b=4
+```
+
+### Rests
+
+Insert silence using the rest command `r`, optionally with a duration multiplier.
+
+```
+c5 r d5.2
+d5 r2 a4
+```
+
+### Time Commands
+
+Change the base duration using time commands. These take effect until the end of the song or block.
+
+- `dt` — Double time (notes become half as long)
+- `ht` — Half time (notes become twice as long)
+- `tt` — Triple time (notes become one-third as long)
+
+```
+dt
+c5 d5 c5 d5 c5 d5 e5.2
+```
+
+Time commands stack when repeated:
+
+```
+dt dt c5 d5  # Each note is 0.25 beats
+```
+
+### Position Restore
+
+Move the position back to the start using `|`. This is useful for writing chords or multiple voices.
+
+```
+c5 | e5 | g5   # C major chord
+```
+
+Two voices:
+
+```
+| c5 g5 e5.2
+| c4.2 f4.2
+```
+
+### Blocks
+
+Blocks are delimited with `{` and `}`. They affect how commands work:
+
+- `|` moves position back to the start of the block
+- Time commands (`dt`, `ht`, `tt`) reset after the block
+- Track selection resets after the block
+
+```
+{
+  dt
+  c5 { dt e5 f5 } d5.2 e5 g5 a5 c6
+}
+|
+{ ht g4 f4 }
+```
+
+### Measures
+
+The `m` command moves the position to a specific measure. Commonly used with blocks:
+
+```
+m0 {
+  | c5 c5 a5 g5
+  | g4.4
+}
+
+m1 {
+  | d5 d5 a5 e5
+  | f4.4
+}
+```
+
+### Key Signature
+
+Set the key signature with `ks` followed by the number of sharps (positive) or flats (negative). Notes are automatically adjusted to match the key.
+
+```
+ks2      # D major (2 sharps: F#, C#)
+c5 d5 e5 f5   # F becomes F#, C becomes C#
+```
+
+Use `=` to override the key signature with a natural:
+
+```
+ks-2
+b5 c5 b=5   # B natural
+```
+
+### Time Signature
+
+Set the time signature with `ts`:
+
+```
+ts3/4
+c5 d5 e5
+```
+
+This affects beats per measure and where measure lines appear.
+
+### Chords
+
+The `$` command specifies a chord symbol for auto-chord generation:
+
+```
+{$G c5.2 a5 d5}
+{$Dm e5 f5 g5.2}
+```
+
+Supported chord types: `M`, `m`, `dim`, `dim7`, `dimM7`, `aug`, `augM7`, `M6`, `m6`, `M7`, `7`, `m7`, `m7b5`, `mM7`
+
+### Tracks
+
+Songs can have multiple tracks, numbered starting from 0. Use `t` to switch tracks:
+
+```
+t0 c5 d5 e5
+t1 g3 g3 g3
+```
+
+### Clefs
+
+Set the clef with `/g` (treble), `/f` (bass), or `/c` (alto):
+
+```
+/g c5 d5 e5
+/f c3 d3 e3
+```
+
+### Comments
+
+Text after `#` is ignored:
+
+```
+c5 d5  # this is a comment
+# full line comment
+e5 f5
+```
+
+## Music Theory Utilities
+
+The library also exports music theory utilities:
+
+```typescript
+import {
+  parseNote,
+  noteName,
+  Chord,
+  MajorScale,
+  MinorScale,
+  KeySignature,
+} from "@leafo/lml"
+
+// Note conversion
+parseNote("C5")  // 60 (MIDI pitch)
+noteName(60)     // "C5"
+
+// Scales
+const scale = new MajorScale("C")
+scale.getRange(5, 8)  // ["C5", "D5", "E5", "F5", "G5", "A5", "B5", "C6"]
+
+// Chords
+const chord = new Chord("C", "M")
+chord.getRange(5, 3)  // ["C5", "E5", "G5"]
+
+// Key signatures
+const key = new KeySignature(2)  // D major
+key.name()  // "D"
+key.accidentalNotes()  // ["F", "C"]
+```
+
+## License
+
+MIT
