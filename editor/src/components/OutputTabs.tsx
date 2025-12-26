@@ -39,12 +39,21 @@ export function OutputTabs({ ast, song, error, timing }: OutputTabsProps) {
             Song
           </button>
         </div>
-        {timing && (
-          <div className="timing">
-            parse: {formatTime(timing.parse)} | compile: {formatTime(timing.compile)}
-            {timing.canvas != null && <> | canvas: {formatTime(timing.canvas)}</>}
-          </div>
-        )}
+        <div className="header-right">
+          {timing && (
+            <span className="timing">
+              parse: {formatTime(timing.parse)} | compile: {formatTime(timing.compile)}
+              {timing.canvas != null && <> | canvas: {formatTime(timing.canvas)}</>}
+            </span>
+          )}
+          <button
+            className="log-btn"
+            onClick={() => console.log(activeTab === 'ast' ? ast : song)}
+            title="Log to console"
+          >
+            log
+          </button>
+        </div>
       </div>
       <div className="output-content">
         {error ? (

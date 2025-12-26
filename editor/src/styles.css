@@ -64,10 +64,32 @@ body {
   justify-content: space-between;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .timing {
   font-size: 11px;
   font-family: monospace;
   color: #666;
+}
+
+.log-btn {
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: monospace;
+  background: transparent;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  color: #666;
+  cursor: pointer;
+}
+
+.log-btn:hover {
+  background: #0f3460;
+  color: #ccc;
 }
 
 .lml-textarea {
