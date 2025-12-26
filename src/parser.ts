@@ -28,6 +28,7 @@ export type ASTNode =
   | ["setTrack", number]
   | ["clef", string]
   | ["macro", string]
+  | ["string", string]
 
 export type AST = ASTNode[]
 
@@ -247,6 +248,14 @@ export default class SongParser {
             song.autoChords.push([state.position, chord])
           }
 
+          break
+        }
+        case "string": {
+          const [, text] = command
+          if (!song.strings) {
+            song.strings = []
+          }
+          song.strings.push([state.position, text])
           break
         }
         case "frontmatter": {

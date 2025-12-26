@@ -67,6 +67,7 @@ export class SongNoteList extends Array<SongNote> {
   metadata?: SongMetadata
   autoChords?: [number, [string, string]][]
   clefs?: [number, string][]
+  strings?: [number, string][]
   trackName?: string
 
   private buckets?: Record<number, number[]>

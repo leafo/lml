@@ -14,7 +14,7 @@ commands
   }
 
 command
-  = note / rest / keySignature / timeSignature / halfTime / doubleTime / tripleTime / measure / block / restoreStartPosition / setTrack / macro / setClef
+  = note / rest / keySignature / timeSignature / halfTime / doubleTime / tripleTime / measure / block / restoreStartPosition / setTrack / macro / setClef / string
 
 keySignature
   = "ks" mod:$( "-"? [0-9]+) {
@@ -115,3 +115,25 @@ comment
 
 white
   = ([\t\r\n ]+ / comment)+
+
+string
+  = '"' chars:doubleStringChar* '"' {
+    return ["string", chars.join("")]
+  }
+  / "'" chars:singleStringChar* "'" {
+    return ["string", chars.join("")]
+  }
+
+doubleStringChar
+  = !('"' / "\\") char:. { return char }
+  / "\\" escape:escapeChar { return escape }
+
+singleStringChar
+  = !("'" / "\\") char:. { return char }
+  / "\\" escape:escapeChar { return escape }
+
+escapeChar
+  = '"' { return '"' }
+  / "'" { return "'" }
+  / "\\" { return "\\" }
+  / "n" { return "\n" }

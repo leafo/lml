@@ -219,6 +219,36 @@ Set the clef with `/g` (treble), `/f` (bass), or `/c` (alto):
 /f c3 d3 e3
 ```
 
+### Strings
+
+Quoted strings can be placed anywhere in a song. They are tagged with their position in beats and stored separately from notes. This is useful for lyrics or annotations.
+
+```
+c5 "hel" d5 "lo" e5 "world"
+```
+
+Both single and double quotes are supported. Strings can span multiple lines:
+
+```
+c5.2 'First verse
+continues here' d5.2
+```
+
+Escape sequences are supported: `\"`, `\'`, `\\`, `\n`.
+
+```
+"say \"hello\""
+'it\'s working'
+```
+
+Strings are accessible via `song.strings`:
+
+```typescript
+const song = SongParser.load('c5 "la" d5 "la"')
+console.log(song.strings)
+// [[1, "la"], [2, "la"]]  // [position, text]
+```
+
 ### Comments
 
 Text after `#` is ignored:

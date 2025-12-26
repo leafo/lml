@@ -513,6 +513,65 @@ describe("parse", () => {
     })
   })
 
+  describe("strings", () => {
+    it("parses double quoted string", () => {
+      assert.deepStrictEqual(parser.parse('"hello"'), [
+        ["string", "hello"]
+      ])
+    })
+
+    it("parses single quoted string", () => {
+      assert.deepStrictEqual(parser.parse("'world'"), [
+        ["string", "world"]
+      ])
+    })
+
+    it("parses string with notes", () => {
+      assert.deepStrictEqual(parser.parse('c5 "la" d5 "la"'), [
+        ["note", "C5"],
+        ["string", "la"],
+        ["note", "D5"],
+        ["string", "la"]
+      ])
+    })
+
+    it("parses multi-line string", () => {
+      assert.deepStrictEqual(parser.parse('"hello\nworld"'), [
+        ["string", "hello\nworld"]
+      ])
+    })
+
+    it("parses escaped double quote", () => {
+      assert.deepStrictEqual(parser.parse('"say \\"hello\\""'), [
+        ["string", 'say "hello"']
+      ])
+    })
+
+    it("parses escaped single quote", () => {
+      assert.deepStrictEqual(parser.parse("'it\\'s'"), [
+        ["string", "it's"]
+      ])
+    })
+
+    it("parses escaped backslash", () => {
+      assert.deepStrictEqual(parser.parse('"path\\\\to"'), [
+        ["string", "path\\to"]
+      ])
+    })
+
+    it("parses escaped newline", () => {
+      assert.deepStrictEqual(parser.parse('"line1\\nline2"'), [
+        ["string", "line1\nline2"]
+      ])
+    })
+
+    it("parses empty string", () => {
+      assert.deepStrictEqual(parser.parse('""'), [
+        ["string", ""]
+      ])
+    })
+  })
+
   describe("whitespace", () => {
     it("handles multiple spaces", () => {
       assert.deepStrictEqual(parser.parse("a5    b5"), [
@@ -1050,6 +1109,47 @@ describe("load", () => {
       assert.deepStrictEqual(song.tracks[0].clefs, [
         [0, "f"]
       ])
+    })
+  })
+
+  describe("strings", () => {
+    it("records string at current position", () => {
+      const song = SongParser.load('c5 "hello" d5')
+      assert.deepStrictEqual(song.strings, [
+        [1, "hello"]
+      ])
+    })
+
+    it("records multiple strings with positions", () => {
+      const song = SongParser.load('c5 "hel" d5 "lo" e5 "world"')
+      assert.deepStrictEqual(song.strings, [
+        [1, "hel"],
+        [2, "lo"],
+        [3, "world"]
+      ])
+    })
+
+    it("string does not advance position", () => {
+      const song = SongParser.load('"start" c5 d5')
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),
+        new SongNote("D5", 1, 1)
+      ])
+      assert.deepStrictEqual(song.strings, [
+        [0, "start"]
+      ])
+    })
+
+    it("records string with multi-line content", () => {
+      const song = SongParser.load('c5 "line1\nline2"')
+      assert.deepStrictEqual(song.strings, [
+        [1, "line1\nline2"]
+      ])
+    })
+
+    it("no strings property when none present", () => {
+      const song = SongParser.load("c5 d5 e5")
+      assert.strictEqual(song.strings, undefined)
     })
   })
 
