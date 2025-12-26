@@ -63,6 +63,13 @@ A duration multiplier can be specified by appending a period and a number. The d
 c5.2 d5 d5 e5.4
 ```
 
+An explicit start position can be specified with `@` followed by the beat number. This places notes at absolute positions rather than sequentially.
+
+```
+c5@0 d5@4 e5@8      # Notes at beats 0, 4, and 8
+c5.2@0 d5.2@2       # Duration 2, at beats 0 and 2
+```
+
 Notes can be made sharp with `+`, flat with `-`, or natural with `=`. These modifiers appear after the note name but before the octave.
 
 ```
@@ -71,11 +78,13 @@ c+5 c-5 b=4
 
 ### Rests
 
-Insert silence using the rest command `r`, optionally with a duration multiplier.
+Insert silence using the rest command `r`, optionally with a duration multiplier. Like notes, rests can also use `@` for explicit positioning.
 
 ```
 c5 r d5.2
 d5 r2 a4
+r@4         # Rest at beat 4
+r2@4        # Rest with duration 2 at beat 4
 ```
 
 ### Time Commands
@@ -210,6 +219,39 @@ c5 d5  # this is a comment
 # full line comment
 e5 f5
 ```
+
+### Frontmatter
+
+Metadata can be embedded at the start of a file using comment-style frontmatter. Lines matching `# key: value` at the very beginning (before any commands) are parsed as metadata:
+
+```
+# title: Moonlight Sonata
+# author: Beethoven
+# bpm: 120
+# difficulty: intermediate
+
+ts4/4 ks-3
+c5 d5 e5 f5
+```
+
+The convention is to use lowercase key names. Frontmatter is accessible via `song.metadata.frontmatter`:
+
+```typescript
+const song = SongParser.load(`
+# title: My Song
+# bpm: 90
+c5 d5 e5
+`)
+
+console.log(song.metadata.frontmatter)
+// { title: "My Song", bpm: "90" }
+```
+
+Notes:
+- Frontmatter must appear at the start of the file, before any music commands
+- Keys are case-sensitive
+- All values are stored as strings
+- Once a non-frontmatter line is encountered, subsequent `# key: value` lines are treated as regular comments
 
 ## Music Theory Utilities
 

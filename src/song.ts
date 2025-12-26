@@ -57,6 +57,7 @@ export class SongNote {
 export interface SongMetadata {
   keySignature?: number
   beatsPerMeasure?: number
+  frontmatter?: Record<string, string>
 }
 
 // like note list but notes in time

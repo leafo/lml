@@ -14,6 +14,7 @@ export type NoteOpts = {
 }
 
 export type ASTNode =
+  | ["frontmatter", string, string]
   | ["note", string, NoteOpts?]
   | ["rest", { duration?: number; start?: number }?]
   | ["keySignature", number]
@@ -71,6 +72,14 @@ export default class SongParser {
 
   // compile ast to song notes
   compile(ast: AST, opts?: SongParserOptions): MultiTrackSong {
+    // Extract frontmatter from AST
+    const frontmatter: Record<string, string> = {}
+    for (const node of ast) {
+      if (node[0] === "frontmatter") {
+        frontmatter[node[1]] = node[2]
+      }
+    }
+
     const state: CompilerState = {
       startPosition: 0,
       position: 0,
@@ -87,6 +96,7 @@ export default class SongParser {
     song.metadata = {
       keySignature: state.keySignature.count,
       beatsPerMeasure: state.beatsPerMeasure,
+      ...(Object.keys(frontmatter).length > 0 && { frontmatter }),
     }
 
     if (song.autoChords) {
@@ -233,6 +243,10 @@ export default class SongParser {
             song.autoChords.push([state.position, chord])
           }
 
+          break
+        }
+        case "frontmatter": {
+          // Handled separately before compileCommands
           break
         }
         default: {

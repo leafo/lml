@@ -49,13 +49,19 @@ describe("parse", () => {
     })
 
     it("parses note with duration and start", () => {
-      assert.deepStrictEqual(parser.parse("f3.1.2"), [
+      assert.deepStrictEqual(parser.parse("f3.1@2"), [
         ["note", "F3", { duration: 1, start: 2 }]
       ])
     })
 
+    it("parses note with only start position", () => {
+      assert.deepStrictEqual(parser.parse("c5@4"), [
+        ["note", "C5", { start: 4 }]
+      ])
+    })
+
     it("parses notes with timing information", () => {
-      assert.deepStrictEqual(parser.parse("g4 a5.1 b2 f3.1.2"), [
+      assert.deepStrictEqual(parser.parse("g4 a5.1 b2 f3.1@2"), [
         ["note", "G4"],
         ["note", "A5", { duration: 1 }],
         ["note", "B2"],
@@ -114,6 +120,18 @@ describe("parse", () => {
     it("parses rest with duration", () => {
       assert.deepStrictEqual(parser.parse("r2"), [
         ["rest", { duration: 2 }]
+      ])
+    })
+
+    it("parses rest with start position", () => {
+      assert.deepStrictEqual(parser.parse("r@4"), [
+        ["rest", { start: 4 }]
+      ])
+    })
+
+    it("parses rest with duration and start", () => {
+      assert.deepStrictEqual(parser.parse("r2@4"), [
+        ["rest", { duration: 2, start: 4 }]
       ])
     })
 
@@ -398,6 +416,89 @@ describe("parse", () => {
     })
   })
 
+  describe("frontmatter", () => {
+    it("parses single frontmatter line", () => {
+      assert.deepStrictEqual(parser.parse("# title: My Song\na5"), [
+        ["frontmatter", "title", "My Song"],
+        ["note", "A5"]
+      ])
+    })
+
+    it("parses multiple frontmatter lines", () => {
+      assert.deepStrictEqual(parser.parse("# title: My Song\n# author: Test\n# bpm: 120\na5"), [
+        ["frontmatter", "title", "My Song"],
+        ["frontmatter", "author", "Test"],
+        ["frontmatter", "bpm", "120"],
+        ["note", "A5"]
+      ])
+    })
+
+    it("handles frontmatter with no space after #", () => {
+      assert.deepStrictEqual(parser.parse("#title: My Song\na5"), [
+        ["frontmatter", "title", "My Song"],
+        ["note", "A5"]
+      ])
+    })
+
+    it("handles frontmatter with extra whitespace", () => {
+      assert.deepStrictEqual(parser.parse("#  title  :  My Song  \na5"), [
+        ["frontmatter", "title", "My Song"],
+        ["note", "A5"]
+      ])
+    })
+
+    it("handles underscore in key name", () => {
+      assert.deepStrictEqual(parser.parse("# my_key: value\na5"), [
+        ["frontmatter", "my_key", "value"],
+        ["note", "A5"]
+      ])
+    })
+
+    it("returns no frontmatter when none present", () => {
+      assert.deepStrictEqual(parser.parse("a5"), [
+        ["note", "A5"]
+      ])
+    })
+
+    it("distinguishes frontmatter from regular comments", () => {
+      // Regular comment (no colon pattern) should not be frontmatter
+      assert.deepStrictEqual(parser.parse("# this is a comment\na5"), [
+        ["note", "A5"]
+      ])
+    })
+
+    it("stops parsing frontmatter after non-frontmatter content", () => {
+      // Once we hit a non-frontmatter line, subsequent # key: lines are just comments
+      assert.deepStrictEqual(parser.parse("# title: Song\na5\n# author: Test\nb5"), [
+        ["frontmatter", "title", "Song"],
+        ["note", "A5"],
+        ["note", "B5"]
+      ])
+    })
+
+    it("is case-sensitive for keys", () => {
+      assert.deepStrictEqual(parser.parse("# Title: One\n# title: Two\na5"), [
+        ["frontmatter", "Title", "One"],
+        ["frontmatter", "title", "Two"],
+        ["note", "A5"]
+      ])
+    })
+
+    it("handles empty value", () => {
+      assert.deepStrictEqual(parser.parse("# key:\na5"), [
+        ["frontmatter", "key", ""],
+        ["note", "A5"]
+      ])
+    })
+
+    it("handles value with special characters", () => {
+      assert.deepStrictEqual(parser.parse("# title: Hello: World! (test) [1,2,3]\na5"), [
+        ["frontmatter", "title", "Hello: World! (test) [1,2,3]"],
+        ["note", "A5"]
+      ])
+    })
+  })
+
   describe("whitespace", () => {
     it("handles multiple spaces", () => {
       assert.deepStrictEqual(parser.parse("a5    b5"), [
@@ -485,7 +586,7 @@ describe("load", () => {
     })
 
     it("loads notes with explicit start position", () => {
-      const song = SongParser.load("c5.1.0 d5.1.4 e5.1.8")
+      const song = SongParser.load("c5.1@0 d5.1@4 e5.1@8")
       matchNotes([...song], [
         new SongNote("C5", 0, 1),
         new SongNote("D5", 4, 1),
@@ -496,7 +597,7 @@ describe("load", () => {
 
   describe("rests", () => {
     it("loads notes with rests", () => {
-      const song = SongParser.load("r1 g5 r2 a5 r3 r1.1 f6")
+      const song = SongParser.load("r1 g5 r2 a5 r3 r1@1 f6")
 
       matchNotes([...song], [
         new SongNote("G5", 1, 1),
@@ -670,6 +771,24 @@ describe("load", () => {
         keySignature: -5,
         beatsPerMeasure: 4
       })
+    })
+
+    it("includes frontmatter in metadata", () => {
+      const song = SongParser.load("# title: Test Song\n# bpm: 120\nks2 c5")
+
+      assert.deepStrictEqual(song.metadata, {
+        keySignature: 2,
+        beatsPerMeasure: 4,
+        frontmatter: {
+          title: "Test Song",
+          bpm: "120"
+        }
+      })
+    })
+
+    it("omits frontmatter from metadata when none present", () => {
+      const song = SongParser.load("c5")
+      assert.strictEqual(song.metadata?.frontmatter, undefined)
     })
 
     it("applies key signature with sharps", () => {

@@ -1,5 +1,12 @@
 start
-  = commands
+  = frontmatter:frontmatterLine* commands:commands {
+    return frontmatter.concat(commands)
+  }
+
+frontmatterLine
+  = "#" [ \t]* key:$([a-zA-Z_][a-zA-Z0-9_]*) [ \t]* ":" value:$[^\n]* "\n" {
+    return ["frontmatter", key, value.trim()]
+  }
 
 commands
   = white ? head:command rest:(white command) * white ? {
@@ -40,7 +47,7 @@ restoreStartPosition
   }
 
 note
-  = name:[a-gA-G] accidental:[+=-] ? octave:[0-9] timing:("." t:noteTiming { return t }) ? {
+  = name:[a-gA-G] accidental:[+=-] ? octave:[0-9] timing:noteTiming ? {
     let opts = {
       ...timing
     }
@@ -61,25 +68,28 @@ note
   }
 
 rest
-  = [rR] timing:(noteTiming) ? {
+  = [rR] timing:restTiming ? {
     let rest = ["rest"]
     if (timing) { rest.push(timing) }
     return rest
   }
 
 noteTiming
-  = duration:$([0-9]+) start:( "." s:$([0-9]+) { return s } ) ?  {
+  = duration:("." d:$[0-9]+ { return +d })? start:("@" s:$[0-9]+ { return +s })? &{ return duration !== null || start !== null } {
     let timing = {}
-
-    if (duration) {
-      timing.duration = +duration
-    }
-
-    if (start) {
-      timing.start = +start
-    }
-
+    if (duration !== null) timing.duration = duration
+    if (start !== null) timing.start = start
     return timing
+  }
+
+restTiming
+  = duration:$[0-9]+ start:("@" s:$[0-9]+ { return +s })? {
+    let timing = { duration: +duration }
+    if (start !== null) timing.start = start
+    return timing
+  }
+  / "@" start:$[0-9]+ {
+    return { start: +start }
   }
 
 halfTime
