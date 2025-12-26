@@ -75,7 +75,7 @@ rest
   }
 
 noteTiming
-  = duration:("." d:$[0-9]+ { return +d })? start:("@" s:$[0-9]+ { return +s })? &{ return duration !== null || start !== null } {
+  = duration:("." d:$[0-9]+ { return +d } / "/" d:$[0-9]+ { return 1/+d })? start:("@" s:$[0-9]+ { return +s })? &{ return duration !== null || start !== null } {
     let timing = {}
     if (duration !== null) timing.duration = duration
     if (start !== null) timing.start = start

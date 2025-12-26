@@ -104,6 +104,30 @@ describe("parse", () => {
       ])
     })
 
+    it("parses duration divider", () => {
+      assert.deepStrictEqual(parser.parse("c5/2"), [
+        ["note", "C5", { duration: 0.5 }]
+      ])
+    })
+
+    it("parses duration divider by 4", () => {
+      assert.deepStrictEqual(parser.parse("c5/4"), [
+        ["note", "C5", { duration: 0.25 }]
+      ])
+    })
+
+    it("parses duration divider with start position", () => {
+      assert.deepStrictEqual(parser.parse("c5/2@4"), [
+        ["note", "C5", { duration: 0.5, start: 4 }]
+      ])
+    })
+
+    it("parses duration divider with relative octave", () => {
+      assert.deepStrictEqual(parser.parse("c/2"), [
+        ["note", "C", { duration: 0.5 }]
+      ])
+    })
+
     it("converts lowercase to uppercase", () => {
       assert.deepStrictEqual(parser.parse("c5 D5 e5"), [
         ["note", "C5"],
@@ -661,6 +685,23 @@ describe("load", () => {
       ])
     })
 
+    it("applies duration divider", () => {
+      const song = SongParser.load("c5/2 d5/4")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 0.5),
+        new SongNote("D5", 0.5, 0.25)
+      ])
+    })
+
+    it("applies duration divider with relative octave", () => {
+      const song = SongParser.load("c/2 d/2 e/2 f/2")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 0.5),
+        new SongNote("D5", 0.5, 0.5),
+        new SongNote("E5", 1, 0.5),
+        new SongNote("F5", 1.5, 0.5)
+      ])
+    })
     it("loads notes with explicit start position", () => {
       const song = SongParser.load("c5.1@0 d5.1@4 e5.1@8")
       matchNotes([...song], [
@@ -1339,6 +1380,26 @@ describe("load", () => {
       matchNotes([...song], [
         new SongNote("C5", 0, 1),
         new SongNote("D5", 5, 1)
+      ])
+    })
+
+    it("uses defaultOctave option", () => {
+      const song = SongParser.load("c d e", { defaultOctave: 4 })
+      matchNotes([...song], [
+        new SongNote("C4", 0, 1),
+        new SongNote("D4", 1, 1),
+        new SongNote("E4", 2, 1)
+      ])
+    })
+
+    it("uses defaultOctave 3 for bass clef", () => {
+      const song = SongParser.load("c d e f g", { defaultOctave: 3 })
+      matchNotes([...song], [
+        new SongNote("C3", 0, 1),
+        new SongNote("D3", 1, 1),
+        new SongNote("E3", 2, 1),
+        new SongNote("F3", 3, 1),
+        new SongNote("G3", 4, 1)
       ])
     })
   })

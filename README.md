@@ -47,11 +47,23 @@ const ast = parser.parse("c5 d e")
 const song = parser.compile(ast)
 ```
 
+### Parser Options
+
+Both `SongParser.load()` and `parser.compile()` accept an options object:
+
+```typescript
+const song = SongParser.load("c d e f g", {
+  defaultOctave: 4,  // Default octave for relative notes (default: 5)
+})
+```
+
+This is useful for bass clef or other instruments that typically play in different registers.
+
 ## LML Syntax
 
 ### Notes
 
-Notes are written as letter names (`a` through `g`) and placed sequentially, separated by whitespace. The octave is automatically determined by finding the closest one to the previous note. The first note defaults to octave 5.
+Notes are written as letter names (`a` through `g`) and placed sequentially, separated by whitespace. The octave is automatically determined by finding the closest one to the previous note. The first note defaults to octave 5 (configurable via `defaultOctave` option).
 
 ```
 c d e f g a b c    # c5 d5 e5 f5 g5 a5 b5 c6
@@ -64,10 +76,11 @@ c d e f g a b c    # Ascending: c5 → c6
 c6 b a g f e d c   # Descending: c6 → c5
 ```
 
-A duration multiplier can be specified by appending a period and a number. The default duration is 1 beat.
+Duration can be modified with `.` (multiply) or `/` (divide). The default duration is 1 beat.
 
 ```
 c.2 d d e.4        # c is 2 beats, d is 1 beat each, e is 4 beats
+c/2 d/2 e/4        # c and d are 0.5 beats, e is 0.25 beats
 ```
 
 An explicit start position can be specified with `@` followed by the beat number. This places notes at absolute positions rather than sequentially.
