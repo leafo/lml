@@ -1,0 +1,205 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1a1a2e;
+  color: #eee;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  padding: 12px 20px;
+  background: #16213e;
+  border-bottom: 1px solid #0f3460;
+}
+
+.header h1 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #e94560;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.input-panel,
+.output-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.input-panel {
+  border-right: 1px solid #0f3460;
+}
+
+.panel-header {
+  padding: 8px 16px;
+  min-height: 42px;
+  background: #16213e;
+  border-bottom: 1px solid #0f3460;
+  font-size: 13px;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+}
+
+.lml-textarea {
+  flex: 1;
+  padding: 16px;
+  background: #0f0f23;
+  border: none;
+  color: #ccc;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+}
+
+.lml-textarea::placeholder {
+  color: #555;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab:hover {
+  background: #0f3460;
+  color: #ccc;
+}
+
+.tab.active {
+  background: #e94560;
+  border-color: #e94560;
+  color: #fff;
+}
+
+.output-content {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  background: #0f0f23;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.error {
+  color: #ff6b6b;
+  white-space: pre-wrap;
+  padding: 12px;
+  background: rgba(255, 107, 107, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+/* JSON Tree Styles */
+.json-toggle {
+  cursor: pointer;
+  user-select: none;
+  color: #666;
+  margin-right: 4px;
+  font-size: 10px;
+}
+
+.json-toggle:hover {
+  color: #e94560;
+}
+
+.json-bracket {
+  color: #888;
+}
+
+.json-key {
+  color: #82aaff;
+  margin-right: 6px;
+}
+
+.json-string {
+  color: #c3e88d;
+}
+
+.json-number {
+  color: #f78c6c;
+}
+
+.json-boolean {
+  color: #c792ea;
+}
+
+.json-null,
+.json-undefined {
+  color: #666;
+  font-style: italic;
+}
+
+.json-index {
+  color: #666;
+  margin-right: 6px;
+}
+
+.json-comma {
+  color: #888;
+}
+
+.json-collapsed {
+  color: #666;
+  cursor: pointer;
+  font-style: italic;
+  margin: 0 4px;
+}
+
+.json-collapsed:hover {
+  color: #e94560;
+}
+
+.json-items {
+  padding-left: 20px;
+}
+
+.json-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.json-array,
+.json-object {
+  display: inline;
+}
+
+.json-inline-array {
+  display: inline;
+}
