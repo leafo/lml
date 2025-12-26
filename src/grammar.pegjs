@@ -96,13 +96,13 @@ restTiming
   }
 
 halfTime
-  = "ht" { return ["halfTime"] }
+  = "ht" count:$[0-9]* { return count ? ["halfTime", +count] : ["halfTime"] }
 
 doubleTime
-  = "dt" { return ["doubleTime"] }
+  = "dt" count:$[0-9]* { return count ? ["doubleTime", +count] : ["doubleTime"] }
 
 tripleTime
-  = "tt" { return ["tripleTime"] }
+  = "tt" count:$[0-9]* { return count ? ["tripleTime", +count] : ["tripleTime"] }
 
 measure
   = "m" measure:$[0-9]+ { return ["measure", +measure] }

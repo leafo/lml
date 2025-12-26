@@ -68,9 +68,9 @@ export type ASTNode =
   | ["rest", { duration?: number; start?: number }?]
   | ["keySignature", number]
   | ["timeSignature", number, number]
-  | ["halfTime"]
-  | ["doubleTime"]
-  | ["tripleTime"]
+  | ["halfTime", number?]
+  | ["doubleTime", number?]
+  | ["tripleTime", number?]
   | ["measure", number?]
   | ["block", ASTNode[]]
   | ["restoreStartPosition"]
@@ -210,15 +210,18 @@ export default class SongParser {
           break
         }
         case "halfTime": {
-          state.timeScale *= 2
+          const [, count = 1] = command
+          state.timeScale *= Math.pow(2, count)
           break
         }
         case "doubleTime": {
-          state.timeScale *= 0.5
+          const [, count = 1] = command
+          state.timeScale *= Math.pow(0.5, count)
           break
         }
         case "tripleTime": {
-          state.timeScale *= 1 / 3
+          const [, count = 1] = command
+          state.timeScale *= Math.pow(1 / 3, count)
           break
         }
         case "measure": {

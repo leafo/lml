@@ -143,10 +143,12 @@ dt
 c d c d c d e.2
 ```
 
-Time commands stack when repeated:
+Time commands stack when repeated. You can also add a number to apply the effect multiple times:
 
 ```
 dt dt c d    # Each note is 0.25 beats
+dt2 c d      # Same as above
+ht3 c        # Note is 8 beats (2^3)
 ```
 
 ### Position Restore

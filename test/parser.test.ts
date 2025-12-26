@@ -255,6 +255,18 @@ describe("parse", () => {
       ])
     })
 
+    it("parses time modifiers with count", () => {
+      assert.deepStrictEqual(parser.parse("dt2"), [
+        ["doubleTime", 2]
+      ])
+      assert.deepStrictEqual(parser.parse("ht3"), [
+        ["halfTime", 3]
+      ])
+      assert.deepStrictEqual(parser.parse("tt2"), [
+        ["tripleTime", 2]
+      ])
+    })
+
     it("parses multiple time modifiers", () => {
       assert.deepStrictEqual(parser.parse("ht ht dt dt"), [
         ["halfTime"],
@@ -790,6 +802,26 @@ describe("load", () => {
         new SongNote("C5", 0, 0.25),
         new SongNote("D5", 0.25, 0.25)
       ])
+    })
+
+    it("applies time modifier with count", () => {
+      // dt2 should be equivalent to dt dt
+      const song = SongParser.load("dt2 c5 d5")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 0.25),
+        new SongNote("D5", 0.25, 0.25)
+      ])
+
+      // ht2 should be equivalent to ht ht (4x duration)
+      const song2 = SongParser.load("ht2 c5")
+      matchNotes([...song2], [
+        new SongNote("C5", 0, 4)
+      ])
+
+      // tt2 should be equivalent to tt tt
+      const song3a = SongParser.load("tt2 c5")
+      const song3b = SongParser.load("tt tt c5")
+      matchNotes([...song3a], [...song3b])
     })
 
     it("sets position and time correctly when using half and double time", () => {
