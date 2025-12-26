@@ -23,6 +23,7 @@ export function App() {
       notes: { note: string; start: number; duration: number }[]
       metadata?: { beatsPerMeasure?: number }
       tracks?: { note: string; start: number; duration: number }[][]
+      measures?: { start: number; beats: number }[]
     } | null
     error: string | null
     timing: { parse: number; compile: number } | null
@@ -56,6 +57,7 @@ export function App() {
           start: note.start,
           duration: note.duration,
         }))),
+        measures: song.getMeasures(),
       }
 
       setParseResult({
@@ -93,7 +95,7 @@ export function App() {
       </main>
       <PianoRoll
         notes={parseResult.song?.notes ?? null}
-        beatsPerMeasure={parseResult.song?.metadata?.beatsPerMeasure}
+        measures={parseResult.song?.measures}
         onRenderTime={setCanvasTime}
       />
     </div>

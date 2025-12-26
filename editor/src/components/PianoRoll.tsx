@@ -7,9 +7,14 @@ interface Note {
   duration: number
 }
 
+interface Measure {
+  start: number
+  beats: number
+}
+
 interface PianoRollProps {
   notes: Note[] | null
-  beatsPerMeasure?: number
+  measures?: Measure[]
   onRenderTime?: (ms: number) => void
 }
 
@@ -17,7 +22,7 @@ const NOTE_HEIGHT = 8
 const BEAT_WIDTH = 40
 const LEFT_MARGIN = 40
 
-export function PianoRoll({ notes, beatsPerMeasure = 4, onRenderTime }: PianoRollProps) {
+export function PianoRoll({ notes, measures, onRenderTime }: PianoRollProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [scrollOffset, setScrollOffset] = useState(0)
@@ -105,11 +110,18 @@ export function PianoRoll({ notes, beatsPerMeasure = 4, onRenderTime }: PianoRol
       }
     }
 
+    // Build a map of measure starts for efficient lookup
+    const measureStarts = new Map<number, number>()  // beat -> measure number
+    if (measures) {
+      measures.forEach((m, i) => measureStarts.set(m.start, i))
+    }
+
     // Vertical lines (beats)
     for (let beat = 0; beat <= totalBeats; beat++) {
       const x = LEFT_MARGIN + beat * beatWidth + scrollOffset
       if (x < LEFT_MARGIN || x > rect.width) continue
-      const isMeasure = beat % beatsPerMeasure === 0
+      const measureNum = measureStarts.get(beat)
+      const isMeasure = measureNum !== undefined
 
       ctx.strokeStyle = isMeasure ? '#2a2a4e' : '#1a1a2e'
       ctx.lineWidth = isMeasure ? 2 : 1
@@ -122,7 +134,26 @@ export function PianoRoll({ notes, beatsPerMeasure = 4, onRenderTime }: PianoRol
       if (isMeasure) {
         ctx.fillStyle = '#666'
         ctx.font = '10px monospace'
-        ctx.fillText(`${beat / beatsPerMeasure}`, x + 4, drawHeight + 14)
+        ctx.fillText(`${measureNum}`, x + 4, drawHeight + 14)
+      }
+    }
+
+    // Draw double line at the end of the song
+    if (measures && measures.length > 0) {
+      const lastMeasure = measures[measures.length - 1]
+      const endBeat = lastMeasure.start + lastMeasure.beats
+      const x = LEFT_MARGIN + endBeat * beatWidth + scrollOffset
+      if (x >= LEFT_MARGIN && x <= rect.width) {
+        ctx.strokeStyle = '#4a4a6e'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.moveTo(x, 0)
+        ctx.lineTo(x, drawHeight)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo(x + 4, 0)
+        ctx.lineTo(x + 4, drawHeight)
+        ctx.stroke()
       }
     }
 
@@ -152,7 +183,7 @@ export function PianoRoll({ notes, beatsPerMeasure = 4, onRenderTime }: PianoRol
     }
 
     onRenderTime?.(performance.now() - start)
-  }, [notes, beatsPerMeasure, onRenderTime, scrollOffset])
+  }, [notes, measures, onRenderTime, scrollOffset])
 
   useEffect(() => {
     draw()

@@ -183,7 +183,7 @@ Blocks are delimited with `{` and `}`. They affect how commands work:
 
 ### Measures
 
-The `m` command moves the position to a measure. Use `m` alone to auto-increment to the next measure, or `m0`, `m1`, etc. for explicit positioning:
+The `m` command moves the position to the start of a measure boundary, useful for aligning notes. Measure boundaries are determined by the current time signature. Use `m` alone to auto-increment to the next measure, or `m0`, `m1`, etc. for explicit positioning:
 
 ```
 m {
@@ -233,6 +233,57 @@ c d e
 
 This affects beats per measure and where measure lines appear.
 
+Time signatures can change mid-song. Notes are placed sequentially regardless of time signature changes:
+
+```
+ts4/4
+c d e f      # 4 beats in 4/4
+ts3/4
+g a b        # 3 beats in 3/4
+ts4/4
+c d e f      # 4 beats in 4/4
+```
+
+Time signature changes are tracked and accessible via `song.timeSignatures`:
+
+```typescript
+const song = SongParser.load("ts3/4 c d e ts4/4 f g a b")
+console.log(song.timeSignatures)
+// [[0, 3], [3, 4]]  // [beat_position, beats_per_measure]
+```
+
+### Measures API
+
+Measures are implicitly created based on the time signature and the duration of notes in the song. Use `getMeasures()` to get an array of measure boundaries, useful for drawing grid lines or measure markers:
+
+```typescript
+const song = SongParser.load("c5 d e f g a b c")  // 8 beats in 4/4
+const measures = song.getMeasures()
+// [{ start: 0, beats: 4 }, { start: 4, beats: 4 }]
+```
+
+This correctly handles time signature changes:
+
+```typescript
+const song = SongParser.load(`
+  ts4/4 c d e f    # 4 beats
+  ts3/4 g a b      # 3 beats
+  ts4/4 c d e f    # 4 beats
+`)
+const measures = song.getMeasures()
+// [
+//   { start: 0, beats: 4 },
+//   { start: 4, beats: 3 },
+//   { start: 7, beats: 4 }
+// ]
+```
+
+Each measure object contains:
+- `start`: Beat position where the measure begins
+- `beats`: Number of beats in this measure
+
+Note: The `m` command (see [Measures](#measures)) is used to align notes to measure boundaries during composition, but is not required—`getMeasures()` computes measure boundaries from the time signature regardless of whether `m` was used.
+
 ### Chords
 
 The `$` command specifies a chord symbol for auto-chord generation:
@@ -260,6 +311,20 @@ Set the clef with `/g` (treble), `/f` (bass), or `/c` (alto):
 ```
 /g c5 d e
 /f c3 d e
+```
+
+Clefs are stored as track metadata, not on individual notes. They hint to renderers which staff to use for displaying the track. Each track supports a single clef assignment. When no clef is specified, the staff is auto-detected based on the note range:
+
+- Notes primarily above middle C → treble staff
+- Notes primarily below middle C → bass staff
+- Notes spanning both ranges → grand staff (treble + bass)
+
+Clefs are accessible via `track.clefs`:
+
+```typescript
+const song = SongParser.load("/f c3 d e")
+console.log(song.tracks[0].clefs)
+// [[0, "f"]]  // [position, clefType]
 ```
 
 ### Strings
@@ -366,6 +431,16 @@ const key = new KeySignature(2)  // D major
 key.name()  // "D"
 key.accidentalNotes()  // ["F", "C"]
 ```
+
+## Limitations
+
+Current limitations that may be addressed in future versions:
+
+- **Clefs are per-track**: Each track supports only a single clef. Mid-track clef changes are not supported.
+
+- **Key signature metadata is global**: While key signatures (`ks`) can change mid-song and correctly affect note parsing, the metadata only stores the final value. Renderers cannot determine where key signature changes occur within the song. (Time signature changes are tracked via `song.timeSignatures` and `song.getMeasures()`.)
+
+- **No explicit grand staff**: Grand staff is only available through auto-detection when notes span both treble and bass registers. There is no syntax to explicitly request a grand staff.
 
 ## License
 

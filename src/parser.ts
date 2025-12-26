@@ -90,6 +90,8 @@ interface CompilerState {
   keySignature: KeySignature
   currentTrack: number
   lastMeasure: number
+  nextMeasureStart: number   // where the next auto-increment measure should start
+  explicitMeasureUsed: boolean  // track if last measure was explicit (affects nextMeasureStart updates)
   lastNotePitch: number | null
   defaultPitch: number
 }
@@ -144,6 +146,8 @@ export default class SongParser {
       keySignature: new KeySignature(0),
       currentTrack: 0,
       lastMeasure: -1,
+      nextMeasureStart: 0,
+      explicitMeasureUsed: false,
       lastNotePitch: null,
       defaultPitch: defaultOctave * OCTAVE_SIZE,  // C at the default octave
     }
@@ -155,6 +159,12 @@ export default class SongParser {
       keySignature: state.keySignature.count,
       beatsPerMeasure: state.ticksPerMeasure / TICKS_PER_BEAT,
       ...(Object.keys(frontmatter).length > 0 && { frontmatter }),
+    }
+
+    // Ensure default 4/4 time signature at position 0 for getMeasures()
+    if (!song.timeSignatures || song.timeSignatures.length === 0 || song.timeSignatures[0][0] > 0) {
+      if (!song.timeSignatures) song.timeSignatures = []
+      song.timeSignatures.unshift([0, 4])
     }
 
     if (song.autoChords) {
@@ -190,6 +200,13 @@ export default class SongParser {
           state.position = blockState.position
           state.lastNotePitch = blockState.lastNotePitch
 
+          // Update nextMeasureStart to where block ended, so next measure continues from here
+          // This handles blocks with different time signatures that don't fill expected duration
+          // But NOT after explicit measure jumps (m5) - we want to maintain calculated boundaries
+          if (!state.explicitMeasureUsed) {
+            state.nextMeasureStart = state.position
+          }
+
           break
         }
         case "halfTime": {
@@ -206,9 +223,23 @@ export default class SongParser {
         }
         case "measure": {
           const [, measure] = command
-          const measureNum = measure !== undefined ? measure : state.lastMeasure + 1
-          state.lastMeasure = measureNum
-          state.position = measureNum * state.ticksPerMeasure
+
+          if (measure !== undefined) {
+            // Explicit measure number - calculate position (for jumps)
+            const measureNum = measure
+            state.lastMeasure = measureNum
+            state.position = measureNum * state.ticksPerMeasure
+            state.nextMeasureStart = (measureNum + 1) * state.ticksPerMeasure
+            state.explicitMeasureUsed = true
+          } else {
+            // Auto-increment - use max of expected boundary or actual position
+            // This handles: 1) notes that don't fill the measure (jump to boundary)
+            //               2) blocks with different time sig (continue from where we are)
+            state.lastMeasure += 1
+            state.position = Math.max(state.nextMeasureStart, state.position)
+            state.nextMeasureStart = state.position + state.ticksPerMeasure
+            state.explicitMeasureUsed = false
+          }
           break
         }
         case "setTrack": {
@@ -312,6 +343,12 @@ export default class SongParser {
           // In 6/8, eighth note = 1 beat = 48 ticks, so ticksPerNote = 48 * (4/8) = 24
           state.ticksPerNote = TICKS_PER_BEAT * (4 / noteValue)
           state.ticksPerMeasure = state.ticksPerNote * perBeat
+
+          // Track time signature changes for getMeasures()
+          if (!song.timeSignatures) {
+            song.timeSignatures = []
+          }
+          song.timeSignatures.push([state.position / TICKS_PER_BEAT, perBeat])
           break
         }
         case "macro": {

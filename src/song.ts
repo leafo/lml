@@ -68,6 +68,7 @@ export class SongNoteList extends Array<SongNote> {
   autoChords?: [number, [string, string]][]
   clefs?: [number, string][]
   strings?: [number, string][]
+  timeSignatures?: [number, number][]  // [beat_position, beats_per_measure][]
   trackName?: string
 
   private buckets?: Record<number, number[]>
@@ -130,6 +131,33 @@ export class SongNoteList extends Array<SongNote> {
   getStartInBeats(): number {
     if (this.length == 0) { return 0 }
     return Math.min.apply(null, this.map((n) => n.getStart()))
+  }
+
+  getMeasures(): { start: number; beats: number }[] {
+    const measures: { start: number; beats: number }[] = []
+    const songEnd = this.getStopInBeats()
+
+    if (songEnd === 0) return measures
+
+    // Default to 4 beats per measure if no time signatures
+    const timeSigs = this.timeSignatures ?? [[0, 4]]
+
+    let position = 0
+    let sigIndex = 0
+    let currentBeats = timeSigs[0]?.[1] ?? 4
+
+    while (position < songEnd) {
+      // Check if time signature changes at or before current position
+      while (sigIndex < timeSigs.length && timeSigs[sigIndex][0] <= position) {
+        currentBeats = timeSigs[sigIndex][1]
+        sigIndex++
+      }
+
+      measures.push({ start: position, beats: currentBeats })
+      position += currentBeats
+    }
+
+    return measures
   }
 
   noteRange(): [string, string] | undefined {

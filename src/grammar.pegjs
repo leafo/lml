@@ -12,6 +12,9 @@ commands
   = white ? head:command rest:(white command) * white ? {
     return [head].concat(rest.map((m) => m[1]))
   }
+  / white ? {
+    return []
+  }
 
 command
   = keySignature / timeSignature / halfTime / doubleTime / tripleTime / measure / block / restoreStartPosition / setTrack / macro / setClef / string / note / rest

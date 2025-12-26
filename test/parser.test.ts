@@ -1295,6 +1295,43 @@ describe("load", () => {
         new SongNote("F5", 44, 1)   // measure 11
       ])
     })
+
+    it("handles time signature changes with measure command", () => {
+      const song = SongParser.load(`
+        ts4/4
+        m { c c c c }
+        ts3/4
+        m { d d d }
+        ts4/4
+        m { e e e e }
+      `)
+      const starts = [...song].map(n => n.start)
+      assert.deepStrictEqual(starts, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    })
+
+    it("handles time signature change inside block", () => {
+      const song = SongParser.load(`
+        ts4/4
+        m { c c c c }
+        m { ts3/4 d d d }
+        m { e e e e }
+      `)
+      const starts = [...song].map(n => n.start)
+      // ts3/4 inside block doesn't affect parent, but position flows correctly
+      assert.deepStrictEqual(starts, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    })
+
+    it("explicit measure jump then auto-increment", () => {
+      const song = SongParser.load(`
+        ts4/4
+        m { c c }
+        m5 { d d }
+        m { e e }
+      `)
+      // m5 jumps to beat 20, m6 should be at beat 24
+      const starts = [...song].map(n => n.start)
+      assert.deepStrictEqual(starts, [0, 1, 20, 21, 24, 25])
+    })
   })
 
   describe("relative octave", () => {
@@ -1470,6 +1507,70 @@ describe("parse errors", () => {
     assert.throws(() => parser.parse("t"), /Expected/)
   })
 
+})
+
+// ============================================================================
+// getMeasures() TESTS
+// ============================================================================
+
+describe("getMeasures", () => {
+  it("returns measures for simple 4/4 song", () => {
+    const song = SongParser.load("c5 d e f g a b c")  // 8 beats
+    const measures = song.getMeasures()
+    assert.deepStrictEqual(measures, [
+      { start: 0, beats: 4 },
+      { start: 4, beats: 4 }
+    ])
+  })
+
+  it("returns measures for 3/4 song", () => {
+    const song = SongParser.load("ts3/4 c5 d e f g a")  // 6 beats
+    const measures = song.getMeasures()
+    assert.deepStrictEqual(measures, [
+      { start: 0, beats: 3 },
+      { start: 3, beats: 3 }
+    ])
+  })
+
+  it("handles time signature changes", () => {
+    const song = SongParser.load(`
+      ts4/4 c5 d e f
+      ts3/4 g a b
+      ts4/4 c d e f
+    `)
+    const measures = song.getMeasures()
+    assert.deepStrictEqual(measures, [
+      { start: 0, beats: 4 },
+      { start: 4, beats: 3 },
+      { start: 7, beats: 4 }
+    ])
+  })
+
+  it("returns empty array for empty song", () => {
+    const song = SongParser.load("ks0")  // ks0 creates a song with no notes
+    assert.deepStrictEqual(song.getMeasures(), [])
+  })
+
+  it("handles song that doesn't fill complete measures", () => {
+    const song = SongParser.load("c5 d e")  // 3 beats, doesn't fill 4/4 measure
+    const measures = song.getMeasures()
+    assert.deepStrictEqual(measures, [
+      { start: 0, beats: 4 }
+    ])
+  })
+
+  it("tracks timeSignatures array on song", () => {
+    const song = SongParser.load("ts3/4 c5 d e ts4/4 f g a b")
+    assert.deepStrictEqual(song.timeSignatures, [
+      [0, 3],  // 3/4 at beat 0
+      [3, 4]   // 4/4 at beat 3
+    ])
+  })
+
+  it("adds default 4/4 when no time signature specified", () => {
+    const song = SongParser.load("c5 d e f")
+    assert.deepStrictEqual(song.timeSignatures, [[0, 4]])
+  })
 })
 
 // ============================================================================
