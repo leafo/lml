@@ -702,6 +702,31 @@ describe("load", () => {
         new SongNote("F5", 1.5, 0.5)
       ])
     })
+
+    it("triplets land on exact beat boundaries", () => {
+      // Three triplet notes should sum to exactly 1 beat
+      const song = SongParser.load("c/3 d/3 e/3 f")
+      const notes = [...song]
+      // The fourth note (f) should start exactly at beat 1.0, not 0.9999... or 1.0000001
+      assert.strictEqual(notes[3].start, 1)
+    })
+
+    it("sixtuplets land on exact beat boundaries", () => {
+      // Six sixtuplet notes should sum to exactly 1 beat
+      const song = SongParser.load("c/6 d/6 e/6 f/6 g/6 a/6 b")
+      const notes = [...song]
+      // The seventh note (b) should start exactly at beat 1.0
+      assert.strictEqual(notes[6].start, 1)
+    })
+
+    it("multiple triplet groups land on exact beats", () => {
+      // Two groups of triplets should land exactly on beat 2.0
+      const song = SongParser.load("c/3 d/3 e/3 f/3 g/3 a/3 b")
+      const notes = [...song]
+      // The seventh note (b) should start exactly at beat 2.0
+      assert.strictEqual(notes[6].start, 2)
+    })
+
     it("loads notes with explicit start position", () => {
       const song = SongParser.load("c5.1@0 d5.1@4 e5.1@8")
       matchNotes([...song], [

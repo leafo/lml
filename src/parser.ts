@@ -4,6 +4,10 @@ import { parseNote, noteName, KeySignature, OFFSETS, OCTAVE_SIZE } from "./music
 import { MultiTrackSong, SongNote } from "./song.js"
 import { AutoChords, AutoChordsOptions } from "./auto-chords.js"
 
+// 48 ticks per beat - divisible by 1,2,3,4,6,8,12,16,24,48
+// Allows exact representation of triplets, sixtuplets, etc.
+const TICKS_PER_BEAT = 48
+
 /**
  * Given a note name without octave (e.g., "C", "F#") and a reference pitch,
  * find the octave that places the note closest to the reference.
@@ -78,11 +82,11 @@ export type ASTNode =
 export type AST = ASTNode[]
 
 interface CompilerState {
-  startPosition: number
-  position: number
-  beatsPerNote: number
-  beatsPerMeasure: number
-  timeScale: number
+  startPosition: number      // in ticks
+  position: number           // in ticks
+  ticksPerNote: number       // base duration in ticks (default: TICKS_PER_BEAT)
+  ticksPerMeasure: number    // ticks per measure
+  timeScale: number          // duration multiplier (unchanged by tick conversion)
   keySignature: KeySignature
   currentTrack: number
   lastMeasure: number
@@ -134,8 +138,8 @@ export default class SongParser {
     const state: CompilerState = {
       startPosition: 0,
       position: 0,
-      beatsPerNote: 1,
-      beatsPerMeasure: 4,
+      ticksPerNote: TICKS_PER_BEAT,        // 1 beat = 48 ticks
+      ticksPerMeasure: TICKS_PER_BEAT * 4, // 4 beats per measure default
       timeScale: 1,
       keySignature: new KeySignature(0),
       currentTrack: 0,
@@ -149,7 +153,7 @@ export default class SongParser {
 
     song.metadata = {
       keySignature: state.keySignature.count,
-      beatsPerMeasure: state.beatsPerMeasure,
+      beatsPerMeasure: state.ticksPerMeasure / TICKS_PER_BEAT,
       ...(Object.keys(frontmatter).length > 0 && { frontmatter }),
     }
 
@@ -204,7 +208,7 @@ export default class SongParser {
           const [, measure] = command
           const measureNum = measure !== undefined ? measure : state.lastMeasure + 1
           state.lastMeasure = measureNum
-          state.position = measureNum * state.beatsPerMeasure
+          state.position = measureNum * state.ticksPerMeasure
           break
         }
         case "setTrack": {
@@ -219,23 +223,20 @@ export default class SongParser {
             track.clefs = []
           }
 
-          track.clefs.push([state.position, clef])
+          // Convert ticks to beats for storage
+          track.clefs.push([state.position / TICKS_PER_BEAT, clef])
           break
         }
         case "note": {
           const [, name, noteOpts] = command
           let noteName = name
-          let duration = state.beatsPerNote * state.timeScale
-          let start: number | null = null
-
+          let durationTicks = state.ticksPerNote * state.timeScale
           let hasAccidental = false
 
           if (noteOpts) {
             if (noteOpts.duration) {
-              duration *= noteOpts.duration
+              durationTicks *= noteOpts.duration
             }
-
-            start = noteOpts.start ?? null
 
             if (noteOpts.sharp) {
               hasAccidental = true
@@ -260,21 +261,33 @@ export default class SongParser {
             noteName = state.keySignature.unconvertNote(noteName)
           }
 
-          if (start === null) {
-            start = state.position
-            state.position += duration
+          // Round duration to ensure integer ticks
+          durationTicks = Math.round(durationTicks)
+
+          // Determine start position
+          let startTicks: number
+          if (noteOpts?.start != null) {
+            // Explicit @ position is in beats, convert to ticks
+            startTicks = noteOpts.start * TICKS_PER_BEAT
+          } else {
+            startTicks = state.position
+            state.position += durationTicks
           }
 
           // Update lastNotePitch for relative octave tracking
           state.lastNotePitch = parseNote(noteName)
 
-          song.pushWithTrack(new SongNote(noteName, start, duration), state.currentTrack)
+          // Convert ticks to beats for SongNote
+          song.pushWithTrack(
+            new SongNote(noteName, startTicks / TICKS_PER_BEAT, durationTicks / TICKS_PER_BEAT),
+            state.currentTrack
+          )
           break
         }
         case "rest": {
           const [, restTiming] = command
 
-          let duration = state.beatsPerNote * state.timeScale
+          let durationTicks = state.ticksPerNote * state.timeScale
 
           if (restTiming) {
             if (restTiming.start) {
@@ -282,11 +295,11 @@ export default class SongParser {
             }
 
             if (restTiming.duration) {
-              duration *= restTiming.duration
+              durationTicks *= restTiming.duration
             }
           }
 
-          state.position += duration
+          state.position += Math.round(durationTicks)
           break
         }
         case "keySignature": {
@@ -295,8 +308,10 @@ export default class SongParser {
         }
         case "timeSignature": {
           const [, perBeat, noteValue] = command
-          state.beatsPerNote = 4 / noteValue
-          state.beatsPerMeasure = state.beatsPerNote * perBeat
+          // Convert beat duration to ticks: 4/4 means quarter note = 1 beat = 48 ticks
+          // In 6/8, eighth note = 1 beat = 48 ticks, so ticksPerNote = 48 * (4/8) = 24
+          state.ticksPerNote = TICKS_PER_BEAT * (4 / noteValue)
+          state.ticksPerMeasure = state.ticksPerNote * perBeat
           break
         }
         case "macro": {
@@ -307,7 +322,8 @@ export default class SongParser {
             if (!song.autoChords) {
               song.autoChords = []
             }
-            song.autoChords.push([state.position, chord])
+            // Convert ticks to beats for storage
+            song.autoChords.push([state.position / TICKS_PER_BEAT, chord])
           }
 
           break
@@ -317,7 +333,8 @@ export default class SongParser {
           if (!song.strings) {
             song.strings = []
           }
-          song.strings.push([state.position, text])
+          // Convert ticks to beats for storage
+          song.strings.push([state.position / TICKS_PER_BEAT, text])
           break
         }
         case "frontmatter": {
