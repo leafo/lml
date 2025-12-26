@@ -87,11 +87,13 @@ interface CompilerState {
   currentTrack: number
   lastMeasure: number
   lastNotePitch: number | null
+  defaultPitch: number
 }
 
 export interface SongParserOptions {
   autoChords?: typeof AutoChords | false
   autoChordsSettings?: AutoChordsOptions
+  defaultOctave?: number  // Default octave for relative notes (default: 5)
 }
 
 // tokens are separated by whitespace
@@ -128,6 +130,7 @@ export default class SongParser {
       }
     }
 
+    const defaultOctave = opts?.defaultOctave ?? 5
     const state: CompilerState = {
       startPosition: 0,
       position: 0,
@@ -138,6 +141,7 @@ export default class SongParser {
       currentTrack: 0,
       lastMeasure: -1,
       lastNotePitch: null,
+      defaultPitch: defaultOctave * OCTAVE_SIZE,  // C at the default octave
     }
 
     const song = new MultiTrackSong()
@@ -247,8 +251,7 @@ export default class SongParser {
           // Handle relative octave (note without octave number)
           const hasOctave = /\d$/.test(noteName)
           if (!hasOctave) {
-            const DEFAULT_PITCH = 60 // C5
-            const referencePitch = state.lastNotePitch ?? DEFAULT_PITCH
+            const referencePitch = state.lastNotePitch ?? state.defaultPitch
             noteName = findClosestOctave(noteName, referencePitch)
           }
 
