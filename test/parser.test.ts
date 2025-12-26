@@ -1344,13 +1344,31 @@ describe("load", () => {
     it("handles time signature change inside block", () => {
       const song = SongParser.load(`
         ts4/4
-        m { c c c c }
-        m { ts3/4 d d d }
-        m { e e e e }
+        m { c }
+        m { ts3/4 d }
+        m { e }
       `)
       const starts = [...song].map(n => n.start)
-      // ts3/4 inside block doesn't affect parent, but position flows correctly
-      assert.deepStrictEqual(starts, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+      // ts3/4 inside block affects subsequent measures (same as outside block)
+      assert.deepStrictEqual(starts, [0, 4, 7])
+    })
+
+    it("handles multiple time signature changes between measures", () => {
+      const song = SongParser.load(`
+        ts4/4
+        m { c }
+
+        ts3/4
+        m { d }
+        m { d }
+
+        ts4/4
+        m { e }
+        m { f }
+      `)
+      const starts = [...song].map(n => n.start)
+      // 4/4: beat 0, then 3/4: beats 4, 7, then 4/4: beats 10, 14
+      assert.deepStrictEqual(starts, [0, 4, 7, 10, 14])
     })
 
     it("explicit measure jump then auto-increment", () => {

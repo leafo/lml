@@ -200,11 +200,11 @@ export default class SongParser {
           state.position = blockState.position
           state.lastNotePitch = blockState.lastNotePitch
 
-          // Update nextMeasureStart to where block ended, so next measure continues from here
-          // This handles blocks with different time signatures that don't fill expected duration
-          // But NOT after explicit measure jumps (m5) - we want to maintain calculated boundaries
-          if (!state.explicitMeasureUsed) {
-            state.nextMeasureStart = state.position
+          // If time signature changed inside block, recalculate next measure boundary
+          if (blockState.ticksPerMeasure !== state.ticksPerMeasure) {
+            const measureStart = state.nextMeasureStart - state.ticksPerMeasure
+            state.nextMeasureStart = measureStart + blockState.ticksPerMeasure
+            state.ticksPerMeasure = blockState.ticksPerMeasure
           }
 
           break
