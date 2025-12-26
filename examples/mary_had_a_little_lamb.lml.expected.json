@@ -1,0 +1,114 @@
+{
+  "notes": [
+    {
+      "note": "B5",
+      "start": 4,
+      "duration": 1
+    },
+    {
+      "note": "A5",
+      "start": 5,
+      "duration": 1
+    },
+    {
+      "note": "G5",
+      "start": 6,
+      "duration": 1
+    },
+    {
+      "note": "A5",
+      "start": 7,
+      "duration": 1
+    },
+    {
+      "note": "B5",
+      "start": 8,
+      "duration": 1
+    },
+    {
+      "note": "B5",
+      "start": 9,
+      "duration": 1
+    },
+    {
+      "note": "B5",
+      "start": 10,
+      "duration": 2
+    },
+    {
+      "note": "A5",
+      "start": 12,
+      "duration": 1
+    },
+    {
+      "note": "A5",
+      "start": 13,
+      "duration": 1
+    },
+    {
+      "note": "A5",
+      "start": 14,
+      "duration": 2
+    }
+  ],
+  "tracks": [
+    {
+      "notes": [
+        {
+          "note": "B5",
+          "start": 4,
+          "duration": 1
+        },
+        {
+          "note": "A5",
+          "start": 5,
+          "duration": 1
+        },
+        {
+          "note": "G5",
+          "start": 6,
+          "duration": 1
+        },
+        {
+          "note": "A5",
+          "start": 7,
+          "duration": 1
+        },
+        {
+          "note": "B5",
+          "start": 8,
+          "duration": 1
+        },
+        {
+          "note": "B5",
+          "start": 9,
+          "duration": 1
+        },
+        {
+          "note": "B5",
+          "start": 10,
+          "duration": 2
+        },
+        {
+          "note": "A5",
+          "start": 12,
+          "duration": 1
+        },
+        {
+          "note": "A5",
+          "start": 13,
+          "duration": 1
+        },
+        {
+          "note": "A5",
+          "start": 14,
+          "duration": 2
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "keySignature": 1,
+    "beatsPerMeasure": 4
+  }
+}

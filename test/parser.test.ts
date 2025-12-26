@@ -1,5 +1,8 @@
 import { describe, it } from "node:test"
 import assert from "node:assert"
+import fs from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 
 import SongParser from "../src/parser.js"
 import { SongNote } from "../src/song.js"
@@ -1268,4 +1271,51 @@ describe("parse errors", () => {
     assert.throws(() => parser.parse("t"), /Expected/)
   })
 
+})
+
+// ============================================================================
+// EXAMPLE FILE TESTS (snapshot testing)
+// ============================================================================
+
+// ES module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// Serialize a song to a comparable JSON object (strips auto-generated IDs and undefined values)
+const serializeSong = (song: ReturnType<typeof SongParser.load>) => {
+  const result: Record<string, unknown> = {
+    notes: [...song].map(n => ({ note: n.note, start: n.start, duration: n.duration })),
+    // Handle sparse arrays by explicitly mapping each index
+    tracks: Array.from({ length: song.tracks.length }, (_, i) => {
+      const t = song.tracks[i]
+      if (!t) return null
+      const track: Record<string, unknown> = {
+        notes: [...t].map(n => ({ note: n.note, start: n.start, duration: n.duration }))
+      }
+      if (t.clefs !== undefined) track.clefs = t.clefs
+      return track
+    }),
+    metadata: song.metadata
+  }
+  if (song.autoChords !== undefined) result.autoChords = song.autoChords
+  if (song.strings !== undefined) result.strings = song.strings
+  return result
+}
+
+describe("example files", () => {
+  const examplesDir = path.join(__dirname, "../examples")
+  const files = fs.readdirSync(examplesDir).filter(f => f.endsWith(".lml"))
+
+  for (const file of files) {
+    it(`parses ${file}`, async () => {
+      const content = await fs.promises.readFile(path.join(examplesDir, file), "utf-8")
+      const song = SongParser.load(content)
+      const output = serializeSong(song)
+
+      const expectedPath = path.join(examplesDir, `${file}.expected.json`)
+      const expected = JSON.parse(await fs.promises.readFile(expectedPath, "utf-8"))
+
+      assert.deepStrictEqual(output, expected)
+    })
+  }
 })

@@ -1,0 +1,86 @@
+ts2/4
+ks1
+
+m0 {
+  dt r3 g5
+}
+
+m1 {
+  $g
+  { dt g5 g5 {dt g5 g5.2 e5}}
+}
+
+m2 {
+  $g
+  {dt g5 g5 g5.2}
+}
+
+m3 {
+  $g
+  {dt g5 g5 a5 { dt b5 b5 }}
+}
+
+m4 {
+  $d7
+  {dt d5 d5 e5 g5}
+}
+
+m5 {
+  $g
+  {dt g5 g5 g5 {dt e5 e5}}
+}
+
+m6 {
+  $g
+  {dt g5 g5 g5 e5}
+}
+
+m7 {
+  $g
+  {dt g5 {dt g5 g5} a5 b5}
+}
+
+m8 {
+  $d7
+  {dt {dt d5 d5.3}} e5
+}
+
+m9 {
+  $g
+  { dt dt b5 b5.2 b5 } b5
+}
+
+m10 {
+  $c
+  { dt a5 g5 {dt e5 g5.3}}
+}
+
+m11 {
+  $d7
+  {dt a5 a5 {dt a5.3 b5}}
+}
+
+m12 {
+  $g
+  { dt d5  d5 {dt e5 g5.3}}
+}
+
+m13 {
+  $g
+  { dt dt b5 b5.2 b5 } d6
+}
+
+m14 {
+  $c
+  { dt b5 a5 {dt g5 e5.3}}
+}
+
+m15 {
+  $d7
+  {dt a5 a5 {dt a5.3 b5}}
+}
+
+m16 {
+  $g
+  {dt d5 d5 {dt e5 g5.3}}
+}

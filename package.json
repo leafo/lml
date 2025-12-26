@@ -20,7 +20,8 @@
     "build:ts": "tsc",
     "build": "npm run build:grammar && npm run build:ts",
     "clean": "rm -rf dist src/grammar.js",
-    "test": "node --import tsx --test 'test/**/*.test.ts'"
+    "test": "node --import tsx --test 'test/**/*.test.ts'",
+    "regenerate-expected": "node --import tsx scripts/regenerate-expected.ts"
   },
   "devDependencies": {
     "peggy": "^5.0.6",
