@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import { parseNote } from '../../../dist/index.js'
 
 interface Note {
@@ -20,6 +20,14 @@ const LEFT_MARGIN = 40
 export function PianoRoll({ notes, beatsPerMeasure = 4, onRenderTime }: PianoRollProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [scrollOffset, setScrollOffset] = useState(0)
+  const scrollOffsetRef = useRef(scrollOffset)
+  scrollOffsetRef.current = scrollOffset
+  const dragRef = useRef<{ isDragging: boolean; startX: number; startOffset: number }>({
+    isDragging: false,
+    startX: 0,
+    startOffset: 0,
+  })
 
   const draw = useCallback(() => {
     const start = performance.now()
@@ -99,7 +107,8 @@ export function PianoRoll({ notes, beatsPerMeasure = 4, onRenderTime }: PianoRol
 
     // Vertical lines (beats)
     for (let beat = 0; beat <= totalBeats; beat++) {
-      const x = LEFT_MARGIN + beat * beatWidth
+      const x = LEFT_MARGIN + beat * beatWidth + scrollOffset
+      if (x < LEFT_MARGIN || x > rect.width) continue
       const isMeasure = beat % beatsPerMeasure === 0
 
       ctx.strokeStyle = isMeasure ? '#2a2a4e' : '#1a1a2e'
@@ -119,9 +128,13 @@ export function PianoRoll({ notes, beatsPerMeasure = 4, onRenderTime }: PianoRol
 
     // Draw notes
     for (const note of parsedNotes) {
-      const x = LEFT_MARGIN + note.start * beatWidth
-      const y = drawHeight - (note.pitch - minPitch + 1) * noteHeight
+      const x = LEFT_MARGIN + note.start * beatWidth + scrollOffset
       const width = note.duration * beatWidth - 2
+
+      // Skip notes that are off-screen
+      if (x + width < LEFT_MARGIN || x > rect.width) continue
+
+      const y = drawHeight - (note.pitch - minPitch + 1) * noteHeight
       const height = noteHeight - 2
 
       // Note fill
@@ -139,7 +152,7 @@ export function PianoRoll({ notes, beatsPerMeasure = 4, onRenderTime }: PianoRol
     }
 
     onRenderTime?.(performance.now() - start)
-  }, [notes, beatsPerMeasure, onRenderTime])
+  }, [notes, beatsPerMeasure, onRenderTime, scrollOffset])
 
   useEffect(() => {
     draw()
@@ -157,9 +170,47 @@ export function PianoRoll({ notes, beatsPerMeasure = 4, onRenderTime }: PianoRol
     return () => resizeObserver.disconnect()
   }, [draw])
 
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    dragRef.current = {
+      isDragging: true,
+      startX: e.clientX,
+      startOffset: scrollOffsetRef.current,
+    }
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = 'grabbing'
+    }
+  }, [])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!dragRef.current.isDragging) return
+    const delta = e.clientX - dragRef.current.startX
+    setScrollOffset(dragRef.current.startOffset + delta)
+  }, [])
+
+  const handleMouseUp = useCallback(() => {
+    dragRef.current.isDragging = false
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = 'grab'
+    }
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    dragRef.current.isDragging = false
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = 'grab'
+    }
+  }, [])
+
   return (
     <div className="piano-roll" ref={containerRef}>
-      <canvas ref={canvasRef} />
+      <canvas
+        ref={canvasRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        style={{ cursor: 'grab' }}
+      />
     </div>
   )
 }
