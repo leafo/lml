@@ -1230,6 +1230,118 @@ describe("load", () => {
       ])
     })
   })
+
+  describe("relative octave", () => {
+    it("defaults first relative note to octave 5", () => {
+      const song = SongParser.load("c d e")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),
+        new SongNote("D5", 1, 1),
+        new SongNote("E5", 2, 1)
+      ])
+    })
+
+    it("uses closest octave from previous note", () => {
+      // From C5, G4 (5 semitones below) is closer than G5 (7 semitones above)
+      const song = SongParser.load("c5 g")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),
+        new SongNote("G4", 1, 1)
+      ])
+    })
+
+    it("jumps octave when note is far", () => {
+      // From G4, C5 (5 semitones above) is closer than C4 (7 semitones below)
+      const song = SongParser.load("g4 c")
+      matchNotes([...song], [
+        new SongNote("G4", 0, 1),
+        new SongNote("C5", 1, 1)
+      ])
+    })
+
+    it("handles ascending scale", () => {
+      const song = SongParser.load("c5 d e f g a b c")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),
+        new SongNote("D5", 1, 1),
+        new SongNote("E5", 2, 1),
+        new SongNote("F5", 3, 1),
+        new SongNote("G5", 4, 1),
+        new SongNote("A5", 5, 1),
+        new SongNote("B5", 6, 1),
+        new SongNote("C6", 7, 1)
+      ])
+    })
+
+    it("handles descending scale", () => {
+      const song = SongParser.load("c6 b a g f e d c")
+      matchNotes([...song], [
+        new SongNote("C6", 0, 1),
+        new SongNote("B5", 1, 1),
+        new SongNote("A5", 2, 1),
+        new SongNote("G5", 3, 1),
+        new SongNote("F5", 4, 1),
+        new SongNote("E5", 5, 1),
+        new SongNote("D5", 6, 1),
+        new SongNote("C5", 7, 1)
+      ])
+    })
+
+    it("handles accidentals with relative octave", () => {
+      const song = SongParser.load("c5 c+ d- e")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),
+        new SongNote("C#5", 1, 1),
+        new SongNote("Db5", 2, 1),
+        new SongNote("E5", 3, 1)
+      ])
+    })
+
+    it("applies key signature to relative notes", () => {
+      // D major (ks2) has F# and C#
+      // From C#5 (pitch 61): F5 (pitch 65, 4 away) is closer than F4 (pitch 53, 8 away)
+      const song = SongParser.load("ks2 c5 f g")
+      matchNotes([...song], [
+        new SongNote("C#5", 0, 1),
+        new SongNote("F#5", 1, 1),
+        new SongNote("G5", 2, 1)
+      ])
+    })
+
+    it("rests do not affect relative octave tracking", () => {
+      const song = SongParser.load("c5 r d")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),
+        new SongNote("D5", 2, 1)
+      ])
+    })
+
+    it("relative notes work in blocks", () => {
+      const song = SongParser.load("c5 { d e } f")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),
+        new SongNote("D5", 1, 1),
+        new SongNote("E5", 2, 1),
+        new SongNote("F5", 3, 1)
+      ])
+    })
+
+    it("parses relative note with duration", () => {
+      const song = SongParser.load("c5 d.2")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),
+        new SongNote("D5", 1, 2)
+      ])
+    })
+
+    it("parses relative note with start position", () => {
+      const song = SongParser.load("c5 d@5")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),
+        new SongNote("D5", 5, 1)
+      ])
+    })
+  })
 })
 
 // ============================================================================
@@ -1239,8 +1351,9 @@ describe("load", () => {
 describe("parse errors", () => {
   const parser = new SongParser()
 
-  it("throws on invalid note (missing octave)", () => {
-    assert.throws(() => parser.parse("c"), /Expected/)
+  it("parses note without octave (relative octave)", () => {
+    // Notes without octaves are now valid (relative octave mode)
+    assert.deepStrictEqual(parser.parse("c"), [["note", "C"]])
   })
 
   it("throws on invalid note letter", () => {

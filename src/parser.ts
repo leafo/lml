@@ -1,8 +1,53 @@
 // @ts-ignore - generated file
 import * as peg from "./grammar.js"
-import { parseNote, noteName, KeySignature } from "./music.js"
+import { parseNote, noteName, KeySignature, OFFSETS, OCTAVE_SIZE } from "./music.js"
 import { MultiTrackSong, SongNote } from "./song.js"
 import { AutoChords, AutoChordsOptions } from "./auto-chords.js"
+
+/**
+ * Given a note name without octave (e.g., "C", "F#") and a reference pitch,
+ * find the octave that places the note closest to the reference.
+ */
+function findClosestOctave(noteLetter: string, referencePitch: number): string {
+  const match = noteLetter.match(/^([A-G])(#|b)?$/)
+  if (!match) {
+    throw new Error(`Invalid note letter: ${noteLetter}`)
+  }
+
+  const [, letter, accidental] = match
+  let noteOffset = OFFSETS[letter] as number
+
+  if (accidental === "#") noteOffset += 1
+  if (accidental === "b") noteOffset -= 1
+
+  // Normalize to 0-11 range (handles Cb = 11, B# = 0)
+  noteOffset = ((noteOffset % OCTAVE_SIZE) + OCTAVE_SIZE) % OCTAVE_SIZE
+
+  // Find the reference note's octave
+  const refOctave = Math.floor(referencePitch / OCTAVE_SIZE)
+
+  // Calculate pitches for octaves around the reference
+  let bestPitch = refOctave * OCTAVE_SIZE + noteOffset
+  let bestDistance = Math.abs(bestPitch - referencePitch)
+
+  // Check octave below
+  const pitchBelow = (refOctave - 1) * OCTAVE_SIZE + noteOffset
+  const distBelow = Math.abs(pitchBelow - referencePitch)
+  if (distBelow < bestDistance) {
+    bestPitch = pitchBelow
+    bestDistance = distBelow
+  }
+
+  // Check octave above
+  const pitchAbove = (refOctave + 1) * OCTAVE_SIZE + noteOffset
+  const distAbove = Math.abs(pitchAbove - referencePitch)
+  if (distAbove < bestDistance) {
+    bestPitch = pitchAbove
+  }
+
+  const finalOctave = Math.floor(bestPitch / OCTAVE_SIZE)
+  return `${noteLetter}${finalOctave}`
+}
 
 // AST node types from the PEG grammar
 export type NoteOpts = {
@@ -41,6 +86,7 @@ interface CompilerState {
   keySignature: KeySignature
   currentTrack: number
   lastMeasure: number
+  lastNotePitch: number | null
 }
 
 export interface SongParserOptions {
@@ -91,6 +137,7 @@ export default class SongParser {
       keySignature: new KeySignature(0),
       currentTrack: 0,
       lastMeasure: -1,
+      lastNotePitch: null,
     }
 
     const song = new MultiTrackSong()
@@ -133,6 +180,7 @@ export default class SongParser {
           this.compileCommands(blockCommands, blockState, song)
 
           state.position = blockState.position
+          state.lastNotePitch = blockState.lastNotePitch
 
           break
         }
@@ -196,6 +244,14 @@ export default class SongParser {
             }
           }
 
+          // Handle relative octave (note without octave number)
+          const hasOctave = /\d$/.test(noteName)
+          if (!hasOctave) {
+            const DEFAULT_PITCH = 60 // C5
+            const referencePitch = state.lastNotePitch ?? DEFAULT_PITCH
+            noteName = findClosestOctave(noteName, referencePitch)
+          }
+
           if (!hasAccidental) {
             // apply default accidental
             noteName = state.keySignature.unconvertNote(noteName)
@@ -205,6 +261,9 @@ export default class SongParser {
             start = state.position
             state.position += duration
           }
+
+          // Update lastNotePitch for relative octave tracking
+          state.lastNotePitch = parseNote(noteName)
 
           song.pushWithTrack(new SongNote(noteName, start, duration), state.currentTrack)
           break

@@ -14,7 +14,7 @@ commands
   }
 
 command
-  = note / rest / keySignature / timeSignature / halfTime / doubleTime / tripleTime / measure / block / restoreStartPosition / setTrack / macro / setClef / string
+  = keySignature / timeSignature / halfTime / doubleTime / tripleTime / measure / block / restoreStartPosition / setTrack / macro / setClef / string / note / rest
 
 keySignature
   = "ks" mod:$( "-"? [0-9]+) {
@@ -47,7 +47,7 @@ restoreStartPosition
   }
 
 note
-  = name:[a-gA-G] accidental:[+=-] ? octave:[0-9] timing:noteTiming ? {
+  = name:[a-gA-G] accidental:[+=-] ? octave:[0-9]? timing:noteTiming ? {
     let opts = {
       ...timing
     }
@@ -60,7 +60,7 @@ note
       opts.natural = true
     }
 
-    let note = ["note", `${name.toUpperCase()}${octave}`]
+    let note = ["note", `${name.toUpperCase()}${octave ?? ""}`]
     if (timing || accidental) {
      note.push(opts)
     }

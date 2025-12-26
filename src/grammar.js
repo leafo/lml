@@ -276,7 +276,7 @@ function peg$parse(input, options) {
       opts.natural = true
     }
 
-    let note = ["note", `${name.toUpperCase()}${octave}`]
+    let note = ["note", `${name.toUpperCase()}${octave ?? ""}`]
     if (timing || accidental) {
      note.push(opts)
     }
@@ -726,33 +726,33 @@ function peg$parse(input, options) {
   function peg$parsecommand() {
     let s0;
 
-    s0 = peg$parsenote();
+    s0 = peg$parsekeySignature();
     if (s0 === peg$FAILED) {
-      s0 = peg$parserest();
+      s0 = peg$parsetimeSignature();
       if (s0 === peg$FAILED) {
-        s0 = peg$parsekeySignature();
+        s0 = peg$parsehalfTime();
         if (s0 === peg$FAILED) {
-          s0 = peg$parsetimeSignature();
+          s0 = peg$parsedoubleTime();
           if (s0 === peg$FAILED) {
-            s0 = peg$parsehalfTime();
+            s0 = peg$parsetripleTime();
             if (s0 === peg$FAILED) {
-              s0 = peg$parsedoubleTime();
+              s0 = peg$parsemeasure();
               if (s0 === peg$FAILED) {
-                s0 = peg$parsetripleTime();
+                s0 = peg$parseblock();
                 if (s0 === peg$FAILED) {
-                  s0 = peg$parsemeasure();
+                  s0 = peg$parserestoreStartPosition();
                   if (s0 === peg$FAILED) {
-                    s0 = peg$parseblock();
+                    s0 = peg$parsesetTrack();
                     if (s0 === peg$FAILED) {
-                      s0 = peg$parserestoreStartPosition();
+                      s0 = peg$parsemacro();
                       if (s0 === peg$FAILED) {
-                        s0 = peg$parsesetTrack();
+                        s0 = peg$parsesetClef();
                         if (s0 === peg$FAILED) {
-                          s0 = peg$parsemacro();
+                          s0 = peg$parsestring();
                           if (s0 === peg$FAILED) {
-                            s0 = peg$parsesetClef();
+                            s0 = peg$parsenote();
                             if (s0 === peg$FAILED) {
-                              s0 = peg$parsestring();
+                              s0 = peg$parserest();
                             }
                           }
                         }
@@ -1130,17 +1130,15 @@ function peg$parse(input, options) {
         s3 = peg$FAILED;
         if (peg$silentFails === 0) { peg$fail(peg$e9); }
       }
-      if (s3 !== peg$FAILED) {
-        s4 = peg$parsenoteTiming();
-        if (s4 === peg$FAILED) {
-          s4 = null;
-        }
-        peg$savedPos = s0;
-        s0 = peg$f9(s1, s2, s3, s4);
-      } else {
-        peg$currPos = s0;
-        s0 = peg$FAILED;
+      if (s3 === peg$FAILED) {
+        s3 = null;
       }
+      s4 = peg$parsenoteTiming();
+      if (s4 === peg$FAILED) {
+        s4 = null;
+      }
+      peg$savedPos = s0;
+      s0 = peg$f9(s1, s2, s3, s4);
     } else {
       peg$currPos = s0;
       s0 = peg$FAILED;
