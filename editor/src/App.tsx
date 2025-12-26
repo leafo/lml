@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { SongParser } from '../../dist/index.js'
 import { LmlInput } from './components/LmlInput'
 import { OutputTabs } from './components/OutputTabs'
+import { PianoRoll } from './components/PianoRoll'
 
 const DEFAULT_LML = `# title: Example Song
 # bpm: 120
@@ -18,17 +19,29 @@ export function App() {
   const [lmlText, setLmlText] = useState(DEFAULT_LML)
   const [parseResult, setParseResult] = useState<{
     ast: unknown
-    song: unknown
+    song: {
+      notes: { note: string; start: number; duration: number }[]
+      metadata?: { beatsPerMeasure?: number }
+      tracks?: { note: string; start: number; duration: number }[][]
+    } | null
     error: string | null
-  }>({ ast: null, song: null, error: null })
+    timing: { parse: number; compile: number } | null
+  }>({ ast: null, song: null, error: null, timing: null })
+  const [canvasTime, setCanvasTime] = useState<number | null>(null)
 
   const handleChange = useCallback((text: string) => {
     setLmlText(text)
 
     try {
       const parser = new SongParser()
+
+      const parseStart = performance.now()
       const ast = parser.parse(text)
+      const parseEnd = performance.now()
+
+      const compileStart = performance.now()
       const song = parser.compile(ast)
+      const compileEnd = performance.now()
 
       // Convert song to a serializable format
       const songData = {
@@ -45,12 +58,21 @@ export function App() {
         }))),
       }
 
-      setParseResult({ ast, song: songData, error: null })
+      setParseResult({
+        ast,
+        song: songData,
+        error: null,
+        timing: {
+          parse: parseEnd - parseStart,
+          compile: compileEnd - compileStart,
+        },
+      })
     } catch (e) {
       setParseResult({
         ast: null,
         song: null,
         error: e instanceof Error ? e.message : String(e),
+        timing: null,
       })
     }
   }, [])
@@ -66,8 +88,14 @@ export function App() {
           ast={parseResult.ast}
           song={parseResult.song}
           error={parseResult.error}
+          timing={parseResult.timing ? { ...parseResult.timing, canvas: canvasTime } : null}
         />
       </main>
+      <PianoRoll
+        notes={parseResult.song?.notes ?? null}
+        beatsPerMeasure={parseResult.song?.metadata?.beatsPerMeasure}
+        onRenderTime={setCanvasTime}
+      />
     </div>
   )
 }

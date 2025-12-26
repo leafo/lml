@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 
 interface JsonTreeProps {
   data: unknown
   depth?: number
+  defaultCollapsed?: boolean
+  collapsedKeys?: string[]
 }
 
-export function JsonTree({ data, depth = 0 }: JsonTreeProps) {
+export const JsonTree = memo(function JsonTree({ data, depth = 0, defaultCollapsed, collapsedKeys }: JsonTreeProps) {
   if (data === null) {
     return <span className="json-null">null</span>
   }
@@ -27,18 +29,18 @@ export function JsonTree({ data, depth = 0 }: JsonTreeProps) {
   }
 
   if (Array.isArray(data)) {
-    return <JsonArray data={data} depth={depth} />
+    return <JsonArray data={data} depth={depth} defaultCollapsed={defaultCollapsed} />
   }
 
   if (typeof data === 'object') {
-    return <JsonObject data={data as Record<string, unknown>} depth={depth} />
+    return <JsonObject data={data as Record<string, unknown>} depth={depth} defaultCollapsed={defaultCollapsed} collapsedKeys={collapsedKeys} />
   }
 
   return <span>{String(data)}</span>
-}
+})
 
-function JsonArray({ data, depth }: { data: unknown[]; depth: number }) {
-  const [collapsed, setCollapsed] = useState(depth > 2)
+const JsonArray = memo(function JsonArray({ data, depth, defaultCollapsed }: { data: unknown[]; depth: number; defaultCollapsed?: boolean }) {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed ?? depth > 1)
 
   if (data.length === 0) {
     return <span className="json-bracket">[]</span>
@@ -91,16 +93,20 @@ function JsonArray({ data, depth }: { data: unknown[]; depth: number }) {
       <span className="json-bracket">]</span>
     </span>
   )
-}
+})
 
-function JsonObject({
+const JsonObject = memo(function JsonObject({
   data,
   depth,
+  defaultCollapsed,
+  collapsedKeys,
 }: {
   data: Record<string, unknown>
   depth: number
+  defaultCollapsed?: boolean
+  collapsedKeys?: string[]
 }) {
-  const [collapsed, setCollapsed] = useState(depth > 2)
+  const [collapsed, setCollapsed] = useState(defaultCollapsed ?? depth > 1)
   const keys = Object.keys(data)
 
   if (keys.length === 0) {
@@ -125,7 +131,7 @@ function JsonObject({
           {keys.map((key, i) => (
             <div key={key} className="json-item">
               <span className="json-key">{key}:</span>
-              <JsonTree data={data[key]} depth={depth + 1} />
+              <JsonTree data={data[key]} depth={depth + 1} defaultCollapsed={collapsedKeys?.includes(key)} />
               {i < keys.length - 1 && <span className="json-comma">,</span>}
             </div>
           ))}
@@ -134,4 +140,4 @@ function JsonObject({
       <span className="json-bracket">{'}'}</span>
     </span>
   )
-}
+})

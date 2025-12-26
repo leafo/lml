@@ -5,7 +5,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: sans-serif;
   background: #1a1a2e;
   color: #eee;
   height: 100vh;
@@ -61,6 +61,13 @@ body {
   color: #aaa;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+}
+
+.timing {
+  font-size: 11px;
+  font-family: monospace;
+  color: #666;
 }
 
 .lml-textarea {
@@ -69,7 +76,7 @@ body {
   background: #0f0f23;
   border: none;
   color: #ccc;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+  font-family: monospace;
   font-size: 14px;
   line-height: 1.5;
   resize: none;
@@ -112,7 +119,7 @@ body {
   overflow: auto;
   padding: 16px;
   background: #0f0f23;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+  font-family: monospace;
   font-size: 13px;
   line-height: 1.6;
 }
@@ -202,4 +209,18 @@ body {
 
 .json-inline-array {
   display: inline;
+}
+
+/* Piano Roll */
+.piano-roll {
+  height: 200px;
+  background: #0f0f23;
+  border-top: 1px solid #0f3460;
+  flex-shrink: 0;
+}
+
+.piano-roll canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
