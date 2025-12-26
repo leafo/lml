@@ -94,7 +94,7 @@ export function App() {
         />
       </main>
       <PianoRoll
-        notes={parseResult.song?.notes ?? null}
+        tracks={parseResult.song?.tracks}
         measures={parseResult.song?.measures}
         onRenderTime={setCanvasTime}
       />

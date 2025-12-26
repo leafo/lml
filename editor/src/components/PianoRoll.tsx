@@ -13,7 +13,7 @@ interface Measure {
 }
 
 interface PianoRollProps {
-  notes: Note[] | null
+  tracks?: Note[][]
   measures?: Measure[]
   onRenderTime?: (ms: number) => void
 }
@@ -22,7 +22,16 @@ const NOTE_HEIGHT = 8
 const BEAT_WIDTH = 40
 const LEFT_MARGIN = 40
 
-export function PianoRoll({ notes, measures, onRenderTime }: PianoRollProps) {
+const TRACK_COLORS = [
+  '#e94560',  // red (track 0)
+  '#4ecdc4',  // teal (track 1)
+  '#ffe66d',  // yellow (track 2)
+  '#95e1d3',  // mint (track 3)
+  '#f38181',  // coral (track 4)
+  '#aa96da',  // purple (track 5)
+]
+
+export function PianoRoll({ tracks, measures, onRenderTime }: PianoRollProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [scrollOffset, setScrollOffset] = useState(0)
@@ -57,7 +66,12 @@ export function PianoRoll({ notes, measures, onRenderTime }: PianoRollProps) {
     ctx.fillStyle = '#0f0f23'
     ctx.fillRect(0, 0, rect.width, rect.height)
 
-    if (!notes || notes.length === 0) {
+    // Flatten tracks into notes with track index
+    const allNotes = tracks?.flatMap((track, trackIndex) =>
+      track.map(n => ({ ...n, trackIndex }))
+    ) ?? []
+
+    if (allNotes.length === 0) {
       ctx.fillStyle = '#666'
       ctx.font = '14px sans-serif'
       ctx.fillText('No notes to display', 20, rect.height / 2)
@@ -65,11 +79,12 @@ export function PianoRoll({ notes, measures, onRenderTime }: PianoRollProps) {
     }
 
     // Parse notes and find range
-    const parsedNotes = notes.map(n => ({
+    const parsedNotes = allNotes.map(n => ({
       pitch: parseNote(n.note),
       start: n.start,
       duration: n.duration,
       name: n.note,
+      trackIndex: n.trackIndex,
     }))
 
     const pitches = parsedNotes.map(n => n.pitch)
@@ -91,7 +106,7 @@ export function PianoRoll({ notes, measures, onRenderTime }: PianoRollProps) {
     ctx.strokeStyle = '#1a1a2e'
     ctx.lineWidth = 1
 
-    // Horizontal lines (pitch rows)
+    // Horizontal lines (pitch rows) - labels drawn later
     for (let p = minPitch; p <= maxPitch; p++) {
       const y = drawHeight - (p - minPitch) * noteHeight
       const isC = p % 12 === 0
@@ -101,13 +116,6 @@ export function PianoRoll({ notes, measures, onRenderTime }: PianoRollProps) {
       ctx.moveTo(LEFT_MARGIN, y)
       ctx.lineTo(rect.width, y)
       ctx.stroke()
-
-      // Label C notes
-      if (isC) {
-        ctx.fillStyle = '#666'
-        ctx.font = '10px monospace'
-        ctx.fillText(`C${Math.floor(p / 12)}`, 4, y + 4)
-      }
     }
 
     // Build a map of measure starts for efficient lookup
@@ -168,8 +176,8 @@ export function PianoRoll({ notes, measures, onRenderTime }: PianoRollProps) {
       const y = drawHeight - (note.pitch - minPitch + 1) * noteHeight
       const height = noteHeight - 2
 
-      // Note fill
-      ctx.fillStyle = '#e94560'
+      // Note fill - color based on track
+      ctx.fillStyle = TRACK_COLORS[note.trackIndex % TRACK_COLORS.length]
       ctx.beginPath()
       ctx.roundRect(x + 1, y + 1, width, height, 3)
       ctx.fill()
@@ -182,8 +190,23 @@ export function PianoRoll({ notes, measures, onRenderTime }: PianoRollProps) {
       }
     }
 
+    // Draw left margin legend (on top of everything)
+    ctx.fillStyle = '#0f0f23'
+    ctx.fillRect(0, 0, LEFT_MARGIN, drawHeight)
+
+    // Draw C note labels
+    for (let p = minPitch; p <= maxPitch; p++) {
+      const isC = p % 12 === 0
+      if (isC) {
+        const y = drawHeight - (p - minPitch) * noteHeight
+        ctx.fillStyle = '#666'
+        ctx.font = '10px monospace'
+        ctx.fillText(`C${Math.floor(p / 12)}`, 4, y + 4)
+      }
+    }
+
     onRenderTime?.(performance.now() - start)
-  }, [notes, measures, onRenderTime, scrollOffset])
+  }, [tracks, measures, onRenderTime, scrollOffset])
 
   useEffect(() => {
     draw()
