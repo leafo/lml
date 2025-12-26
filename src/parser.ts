@@ -22,7 +22,7 @@ export type ASTNode =
   | ["halfTime"]
   | ["doubleTime"]
   | ["tripleTime"]
-  | ["measure", number]
+  | ["measure", number?]
   | ["block", ASTNode[]]
   | ["restoreStartPosition"]
   | ["setTrack", number]
@@ -39,6 +39,7 @@ interface CompilerState {
   timeScale: number
   keySignature: KeySignature
   currentTrack: number
+  lastMeasure: number
 }
 
 export interface SongParserOptions {
@@ -88,6 +89,7 @@ export default class SongParser {
       timeScale: 1,
       keySignature: new KeySignature(0),
       currentTrack: 0,
+      lastMeasure: -1,
     }
 
     const song = new MultiTrackSong()
@@ -147,7 +149,9 @@ export default class SongParser {
         }
         case "measure": {
           const [, measure] = command
-          state.position = measure * state.beatsPerMeasure
+          const measureNum = measure !== undefined ? measure : state.lastMeasure + 1
+          state.lastMeasure = measureNum
+          state.position = measureNum * state.beatsPerMeasure
           break
         }
         case "setTrack": {

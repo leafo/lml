@@ -295,10 +295,9 @@ function peg$parse(input, options) {
   function peg$f18() {    return ["halfTime"]  }
   function peg$f19() {    return ["doubleTime"]  }
   function peg$f20() {    return ["tripleTime"]  }
-  function peg$f21(measure) {
-    return ["measure", +measure]
-  }
-  function peg$f22(commands) {
+  function peg$f21(measure) {    return ["measure", +measure]  }
+  function peg$f22() {    return ["measure"]  }
+  function peg$f23(commands) {
     return ["block", commands]
   }
   let peg$currPos = options.peg$currPos | 0;
@@ -1525,6 +1524,21 @@ function peg$parse(input, options) {
       peg$currPos = s0;
       s0 = peg$FAILED;
     }
+    if (s0 === peg$FAILED) {
+      s0 = peg$currPos;
+      if (input.charCodeAt(peg$currPos) === 109) {
+        s1 = peg$c15;
+        peg$currPos++;
+      } else {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) { peg$fail(peg$e24); }
+      }
+      if (s1 !== peg$FAILED) {
+        peg$savedPos = s0;
+        s1 = peg$f22();
+      }
+      s0 = s1;
+    }
 
     return s0;
   }
@@ -1552,7 +1566,7 @@ function peg$parse(input, options) {
         }
         if (s3 !== peg$FAILED) {
           peg$savedPos = s0;
-          s0 = peg$f22(s2);
+          s0 = peg$f23(s2);
         } else {
           peg$currPos = s0;
           s0 = peg$FAILED;

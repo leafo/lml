@@ -140,18 +140,27 @@ Blocks are delimited with `{` and `}`. They affect how commands work:
 
 ### Measures
 
-The `m` command moves the position to a specific measure. Commonly used with blocks:
+The `m` command moves the position to a measure. Use `m` alone to auto-increment to the next measure, or `m0`, `m1`, etc. for explicit positioning:
 
 ```
-m0 {
+m {
   | c5 c5 a5 g5
   | g4.4
 }
 
-m1 {
+m {
   | d5 d5 a5 e5
   | f4.4
 }
+```
+
+The first `m` goes to measure 0, then each subsequent `m` increments. Explicit measure numbers also update the counter:
+
+```
+m { c5 d5 }    # measure 0
+m { e5 f5 }    # measure 1
+m5 { g5 a5 }   # measure 5
+m { b5 c6 }    # measure 6
 ```
 
 ### Key Signature

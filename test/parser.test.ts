@@ -251,6 +251,20 @@ describe("parse", () => {
       ])
     })
 
+    it("parses measure without number", () => {
+      assert.deepStrictEqual(parser.parse("m"), [
+        ["measure"]
+      ])
+    })
+
+    it("parses multiple auto-increment measures", () => {
+      assert.deepStrictEqual(parser.parse("m m m"), [
+        ["measure"],
+        ["measure"],
+        ["measure"]
+      ])
+    })
+
     it("parses multiple measures", () => {
       assert.deepStrictEqual(parser.parse("m0 m1 m2"), [
         ["measure", 0],
@@ -1068,6 +1082,50 @@ describe("load", () => {
         new SongNote("E5", 6, 1)
       ])
     })
+
+    it("auto-increments measure from start", () => {
+      const song = SongParser.load(`
+        m c5
+        m d5
+        m e5
+      `)
+
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),  // measure 0
+        new SongNote("D5", 4, 1),  // measure 1
+        new SongNote("E5", 8, 1)   // measure 2
+      ])
+    })
+
+    it("auto-increments after explicit measure", () => {
+      const song = SongParser.load(`
+        m5 c5
+        m d5
+        m e5
+      `)
+
+      matchNotes([...song], [
+        new SongNote("C5", 20, 1),  // measure 5
+        new SongNote("D5", 24, 1),  // measure 6
+        new SongNote("E5", 28, 1)   // measure 7
+      ])
+    })
+
+    it("mixes explicit and auto-increment measures", () => {
+      const song = SongParser.load(`
+        m c5
+        m d5
+        m10 e5
+        m f5
+      `)
+
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1),   // measure 0
+        new SongNote("D5", 4, 1),   // measure 1
+        new SongNote("E5", 40, 1),  // measure 10
+        new SongNote("F5", 44, 1)   // measure 11
+      ])
+    })
   })
 })
 
@@ -1110,7 +1168,4 @@ describe("parse errors", () => {
     assert.throws(() => parser.parse("t"), /Expected/)
   })
 
-  it("throws on invalid measure (missing number)", () => {
-    assert.throws(() => parser.parse("m"), /Expected/)
-  })
 })

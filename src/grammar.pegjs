@@ -102,9 +102,8 @@ tripleTime
   = "tt" { return ["tripleTime"] }
 
 measure
-  = "m" measure:$([0-9]+) {
-    return ["measure", +measure]
-  }
+  = "m" measure:$[0-9]+ { return ["measure", +measure] }
+  / "m" { return ["measure"] }
 
 block
   = "{" commands:commands "}" {
