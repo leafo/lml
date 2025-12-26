@@ -105,4 +105,4 @@ comment
   = "#" [^\n]+
 
 white
-  = [\t\r\n ]+ (comment white) ?
+  = ([\t\r\n ]+ / comment)+

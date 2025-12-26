@@ -390,8 +390,12 @@ describe("parse", () => {
       ])
     })
 
-    // TODO: Bug - comments at the very start (before any whitespace) cause a parse error
-    it.todo("ignores comment at start of input")
+    it("ignores comment at start of input", () => {
+      assert.deepStrictEqual(parser.parse("# comment at start\na5 b5"), [
+        ["note", "A5"],
+        ["note", "B5"]
+      ])
+    })
   })
 
   describe("whitespace", () => {

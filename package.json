@@ -1,6 +1,6 @@
 {
   "name": "@leafo/lml",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "LML (Leaf's Music Language) parser and music theory library",
   "type": "module",
   "main": "./dist/index.js",
@@ -34,5 +34,14 @@
     "lml",
     "music-theory"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "author": "leafo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leafo/lml.git"
+  },
+  "bugs": {
+    "url": "https://github.com/leafo/lml/issues"
+  },
+  "homepage": "https://github.com/leafo/lml#readme"
 }
