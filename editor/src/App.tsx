@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { SongParser } from '../../dist/index.js'
+import { SongParser } from '@leafo/lml'
 import { LmlInput } from './components/LmlInput'
 import { OutputTabs } from './components/OutputTabs'
 import { PianoRoll } from './components/PianoRoll'
