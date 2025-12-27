@@ -16,17 +16,17 @@ import {
 
 describe("parseNote", () => {
   it("parses middle C", () => {
-    assert.strictEqual(parseNote("C5"), MIDDLE_C_PITCH)
+    assert.strictEqual(parseNote("C4"), MIDDLE_C_PITCH)
   })
 
   it("parses notes with sharps", () => {
-    assert.strictEqual(parseNote("C#5"), MIDDLE_C_PITCH + 1)
-    assert.strictEqual(parseNote("F#4"), parseNote("F4") + 1)
+    assert.strictEqual(parseNote("C#4"), MIDDLE_C_PITCH + 1)
+    assert.strictEqual(parseNote("F#3"), parseNote("F3") + 1)
   })
 
   it("parses notes with flats", () => {
-    assert.strictEqual(parseNote("Db5"), MIDDLE_C_PITCH + 1)
-    assert.strictEqual(parseNote("Bb4"), parseNote("B4") - 1)
+    assert.strictEqual(parseNote("Db4"), MIDDLE_C_PITCH + 1)
+    assert.strictEqual(parseNote("Bb3"), parseNote("B3") - 1)
   })
 
   it("throws on invalid input", () => {
@@ -37,16 +37,16 @@ describe("parseNote", () => {
 
 describe("noteName", () => {
   it("converts pitch to note name", () => {
-    assert.strictEqual(noteName(MIDDLE_C_PITCH), "C5")
-    assert.strictEqual(noteName(MIDDLE_C_PITCH + 12), "C6")
+    assert.strictEqual(noteName(MIDDLE_C_PITCH), "C4")
+    assert.strictEqual(noteName(MIDDLE_C_PITCH + 12), "C5")
   })
 
   it("uses sharps by default for accidentals", () => {
-    assert.strictEqual(noteName(MIDDLE_C_PITCH + 1), "C#5")
+    assert.strictEqual(noteName(MIDDLE_C_PITCH + 1), "C#4")
   })
 
   it("can use flats for accidentals", () => {
-    assert.strictEqual(noteName(MIDDLE_C_PITCH + 1, false), "Db5")
+    assert.strictEqual(noteName(MIDDLE_C_PITCH + 1, false), "Db4")
   })
 })
 
@@ -63,9 +63,9 @@ describe("notesSame", () => {
 
 describe("addInterval", () => {
   it("adds halfsteps to a note", () => {
-    assert.strictEqual(addInterval("C5", 4), "E5")  // major third
-    assert.strictEqual(addInterval("C5", 7), "G5")  // perfect fifth
-    assert.strictEqual(addInterval("C5", 12), "C6") // octave
+    assert.strictEqual(addInterval("C4", 4), "E4")  // major third
+    assert.strictEqual(addInterval("C4", 7), "G4")  // perfect fifth
+    assert.strictEqual(addInterval("C4", 12), "C5") // octave
   })
 })
 
@@ -86,8 +86,8 @@ describe("compareNotes", () => {
 describe("MajorScale", () => {
   it("generates correct scale notes", () => {
     const scale = new MajorScale("C")
-    const notes = scale.getRange(5, 8)
-    assert.deepStrictEqual(notes, ["C5", "D5", "E5", "F5", "G5", "A5", "B5", "C6"])
+    const notes = scale.getRange(4, 8)
+    assert.deepStrictEqual(notes, ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"])
   })
 
   it("checks if note is in scale", () => {
@@ -101,28 +101,28 @@ describe("MajorScale", () => {
 describe("MinorScale", () => {
   it("generates correct scale notes", () => {
     const scale = new MinorScale("A")
-    const notes = scale.getRange(4, 8)
-    assert.deepStrictEqual(notes, ["A4", "B4", "C5", "D5", "E5", "F5", "G5", "A5"])
+    const notes = scale.getRange(3, 8)
+    assert.deepStrictEqual(notes, ["A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4"])
   })
 })
 
 describe("Chord", () => {
   it("creates a major chord", () => {
     const chord = new Chord("C", "M")
-    const notes = chord.getRange(5, 3)
-    assert.deepStrictEqual(notes, ["C5", "E5", "G5"])
+    const notes = chord.getRange(4, 3)
+    assert.deepStrictEqual(notes, ["C4", "E4", "G4"])
   })
 
   it("creates a minor chord", () => {
     const chord = new Chord("A", "m")
-    const notes = chord.getRange(4, 3)
-    assert.deepStrictEqual(notes, ["A4", "C5", "E5"])
+    const notes = chord.getRange(3, 3)
+    assert.deepStrictEqual(notes, ["A3", "C4", "E4"])
   })
 
   it("creates a seventh chord", () => {
     const chord = new Chord("G", "7")
-    const notes = chord.getRange(4, 4)
-    assert.deepStrictEqual(notes, ["G4", "B4", "D5", "F5"])
+    const notes = chord.getRange(3, 4)
+    assert.deepStrictEqual(notes, ["G3", "B3", "D4", "F4"])
   })
 
   it("generates chord name", () => {

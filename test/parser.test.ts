@@ -708,10 +708,10 @@ describe("load", () => {
     it("applies duration divider with relative octave", () => {
       const song = SongParser.load("c/2 d/2 e/2 f/2")
       matchNotes([...song], [
-        new SongNote("C5", 0, 0.5),
-        new SongNote("D5", 0.5, 0.5),
-        new SongNote("E5", 1, 0.5),
-        new SongNote("F5", 1.5, 0.5)
+        new SongNote("C4", 0, 0.5),
+        new SongNote("D4", 0.5, 0.5),
+        new SongNote("E4", 1, 0.5),
+        new SongNote("F4", 1.5, 0.5)
       ])
     })
 
@@ -1385,122 +1385,122 @@ describe("load", () => {
   })
 
   describe("relative octave", () => {
-    it("defaults first relative note to octave 5", () => {
+    it("defaults first relative note to octave 4", () => {
       const song = SongParser.load("c d e")
       matchNotes([...song], [
-        new SongNote("C5", 0, 1),
-        new SongNote("D5", 1, 1),
-        new SongNote("E5", 2, 1)
+        new SongNote("C4", 0, 1),
+        new SongNote("D4", 1, 1),
+        new SongNote("E4", 2, 1)
       ])
     })
 
     it("uses closest octave from previous note", () => {
-      // From C5, G4 (5 semitones below) is closer than G5 (7 semitones above)
-      const song = SongParser.load("c5 g")
+      // From C4, G3 (5 semitones below) is closer than G4 (7 semitones above)
+      const song = SongParser.load("c4 g")
       matchNotes([...song], [
-        new SongNote("C5", 0, 1),
-        new SongNote("G4", 1, 1)
+        new SongNote("C4", 0, 1),
+        new SongNote("G3", 1, 1)
       ])
     })
 
     it("jumps octave when note is far", () => {
-      // From G4, C5 (5 semitones above) is closer than C4 (7 semitones below)
-      const song = SongParser.load("g4 c")
+      // From G3, C4 (5 semitones above) is closer than C3 (7 semitones below)
+      const song = SongParser.load("g3 c")
       matchNotes([...song], [
-        new SongNote("G4", 0, 1),
-        new SongNote("C5", 1, 1)
+        new SongNote("G3", 0, 1),
+        new SongNote("C4", 1, 1)
       ])
     })
 
     it("handles ascending scale", () => {
-      const song = SongParser.load("c5 d e f g a b c")
+      const song = SongParser.load("c4 d e f g a b c")
       matchNotes([...song], [
-        new SongNote("C5", 0, 1),
-        new SongNote("D5", 1, 1),
-        new SongNote("E5", 2, 1),
-        new SongNote("F5", 3, 1),
-        new SongNote("G5", 4, 1),
-        new SongNote("A5", 5, 1),
-        new SongNote("B5", 6, 1),
-        new SongNote("C6", 7, 1)
-      ])
-    })
-
-    it("handles descending scale", () => {
-      const song = SongParser.load("c6 b a g f e d c")
-      matchNotes([...song], [
-        new SongNote("C6", 0, 1),
-        new SongNote("B5", 1, 1),
-        new SongNote("A5", 2, 1),
-        new SongNote("G5", 3, 1),
-        new SongNote("F5", 4, 1),
-        new SongNote("E5", 5, 1),
-        new SongNote("D5", 6, 1),
+        new SongNote("C4", 0, 1),
+        new SongNote("D4", 1, 1),
+        new SongNote("E4", 2, 1),
+        new SongNote("F4", 3, 1),
+        new SongNote("G4", 4, 1),
+        new SongNote("A4", 5, 1),
+        new SongNote("B4", 6, 1),
         new SongNote("C5", 7, 1)
       ])
     })
 
-    it("handles accidentals with relative octave", () => {
-      const song = SongParser.load("c5 c+ d- e")
+    it("handles descending scale", () => {
+      const song = SongParser.load("c5 b a g f e d c")
       matchNotes([...song], [
         new SongNote("C5", 0, 1),
-        new SongNote("C#5", 1, 1),
-        new SongNote("Db5", 2, 1),
-        new SongNote("E5", 3, 1)
+        new SongNote("B4", 1, 1),
+        new SongNote("A4", 2, 1),
+        new SongNote("G4", 3, 1),
+        new SongNote("F4", 4, 1),
+        new SongNote("E4", 5, 1),
+        new SongNote("D4", 6, 1),
+        new SongNote("C4", 7, 1)
+      ])
+    })
+
+    it("handles accidentals with relative octave", () => {
+      const song = SongParser.load("c4 c+ d- e")
+      matchNotes([...song], [
+        new SongNote("C4", 0, 1),
+        new SongNote("C#4", 1, 1),
+        new SongNote("Db4", 2, 1),
+        new SongNote("E4", 3, 1)
       ])
     })
 
     it("applies key signature to relative notes", () => {
       // D major (ks2) has F# and C#
-      // From C#5 (pitch 61): F5 (pitch 65, 4 away) is closer than F4 (pitch 53, 8 away)
-      const song = SongParser.load("ks2 c5 f g")
+      // From C#4 (pitch 61): F4 (pitch 65, 4 away) is closer than F3 (pitch 53, 8 away)
+      const song = SongParser.load("ks2 c4 f g")
       matchNotes([...song], [
-        new SongNote("C#5", 0, 1),
-        new SongNote("F#5", 1, 1),
-        new SongNote("G5", 2, 1)
+        new SongNote("C#4", 0, 1),
+        new SongNote("F#4", 1, 1),
+        new SongNote("G4", 2, 1)
       ])
     })
 
     it("rests do not affect relative octave tracking", () => {
-      const song = SongParser.load("c5 r d")
+      const song = SongParser.load("c4 r d")
       matchNotes([...song], [
-        new SongNote("C5", 0, 1),
-        new SongNote("D5", 2, 1)
+        new SongNote("C4", 0, 1),
+        new SongNote("D4", 2, 1)
       ])
     })
 
     it("relative notes work in blocks", () => {
-      const song = SongParser.load("c5 { d e } f")
+      const song = SongParser.load("c4 { d e } f")
       matchNotes([...song], [
-        new SongNote("C5", 0, 1),
-        new SongNote("D5", 1, 1),
-        new SongNote("E5", 2, 1),
-        new SongNote("F5", 3, 1)
+        new SongNote("C4", 0, 1),
+        new SongNote("D4", 1, 1),
+        new SongNote("E4", 2, 1),
+        new SongNote("F4", 3, 1)
       ])
     })
 
     it("parses relative note with duration", () => {
-      const song = SongParser.load("c5 d.2")
+      const song = SongParser.load("c4 d.2")
       matchNotes([...song], [
-        new SongNote("C5", 0, 1),
-        new SongNote("D5", 1, 2)
+        new SongNote("C4", 0, 1),
+        new SongNote("D4", 1, 2)
       ])
     })
 
     it("parses relative note with start position", () => {
-      const song = SongParser.load("c5 d@5")
+      const song = SongParser.load("c4 d@5")
       matchNotes([...song], [
-        new SongNote("C5", 0, 1),
-        new SongNote("D5", 5, 1)
+        new SongNote("C4", 0, 1),
+        new SongNote("D4", 5, 1)
       ])
     })
 
     it("uses defaultOctave option", () => {
-      const song = SongParser.load("c d e", { defaultOctave: 4 })
+      const song = SongParser.load("c d e", { defaultOctave: 5 })
       matchNotes([...song], [
-        new SongNote("C4", 0, 1),
-        new SongNote("D4", 1, 1),
-        new SongNote("E4", 2, 1)
+        new SongNote("C5", 0, 1),
+        new SongNote("D5", 1, 1),
+        new SongNote("E5", 2, 1)
       ])
     })
 
@@ -1565,7 +1565,7 @@ describe("parse errors", () => {
 
 describe("getMeasures", () => {
   it("returns measures for simple 4/4 song", () => {
-    const song = SongParser.load("c5 d e f g a b c")  // 8 beats
+    const song = SongParser.load("c4 d e f g a b c")  // 8 beats
     const measures = song.getMeasures()
     assert.deepStrictEqual(measures, [
       { start: 0, beats: 4 },
@@ -1574,7 +1574,7 @@ describe("getMeasures", () => {
   })
 
   it("returns measures for 3/4 song", () => {
-    const song = SongParser.load("ts3/4 c5 d e f g a")  // 6 beats
+    const song = SongParser.load("ts3/4 c4 d e f g a")  // 6 beats
     const measures = song.getMeasures()
     assert.deepStrictEqual(measures, [
       { start: 0, beats: 3 },
@@ -1584,7 +1584,7 @@ describe("getMeasures", () => {
 
   it("handles time signature changes", () => {
     const song = SongParser.load(`
-      ts4/4 c5 d e f
+      ts4/4 c4 d e f
       ts3/4 g a b
       ts4/4 c d e f
     `)
@@ -1602,7 +1602,7 @@ describe("getMeasures", () => {
   })
 
   it("handles song that doesn't fill complete measures", () => {
-    const song = SongParser.load("c5 d e")  // 3 beats, doesn't fill 4/4 measure
+    const song = SongParser.load("c4 d e")  // 3 beats, doesn't fill 4/4 measure
     const measures = song.getMeasures()
     assert.deepStrictEqual(measures, [
       { start: 0, beats: 4 }
@@ -1610,7 +1610,7 @@ describe("getMeasures", () => {
   })
 
   it("tracks timeSignatures array on song", () => {
-    const song = SongParser.load("ts3/4 c5 d e ts4/4 f g a b")
+    const song = SongParser.load("ts3/4 c4 d e ts4/4 f g a b")
     assert.deepStrictEqual(song.timeSignatures, [
       [0, 3],  // 3/4 at beat 0
       [3, 4]   // 4/4 at beat 3
@@ -1618,7 +1618,7 @@ describe("getMeasures", () => {
   })
 
   it("adds default 4/4 when no time signature specified", () => {
-    const song = SongParser.load("c5 d e f")
+    const song = SongParser.load("c4 d e f")
     assert.deepStrictEqual(song.timeSignatures, [[0, 4]])
   })
 })

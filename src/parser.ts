@@ -49,7 +49,7 @@ function findClosestOctave(noteLetter: string, referencePitch: number): string {
     bestPitch = pitchAbove
   }
 
-  const finalOctave = Math.floor(bestPitch / OCTAVE_SIZE)
+  const finalOctave = Math.floor(bestPitch / OCTAVE_SIZE) - 1
   return `${noteLetter}${finalOctave}`
 }
 
@@ -136,7 +136,7 @@ export default class SongParser {
       }
     }
 
-    const defaultOctave = opts?.defaultOctave ?? 5
+    const defaultOctave = opts?.defaultOctave ?? 4
     const state: CompilerState = {
       startPosition: 0,
       position: 0,
@@ -149,7 +149,7 @@ export default class SongParser {
       nextMeasureStart: 0,
       explicitMeasureUsed: false,
       lastNotePitch: null,
-      defaultPitch: defaultOctave * OCTAVE_SIZE,  // C at the default octave
+      defaultPitch: (defaultOctave + 1) * OCTAVE_SIZE,  // C at the default octave (MIDI: C4 = 60)
     }
 
     const song = new MultiTrackSong()

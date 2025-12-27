@@ -40,8 +40,8 @@ export const NOTE_NAME_OFFSETS: Record<string, number> = {
 }
 
 export function noteName(pitch: number, sharpen = true): string {
-  const octave = Math.floor(pitch / OCTAVE_SIZE)
-  const offset = pitch - octave * OCTAVE_SIZE
+  const octave = Math.floor(pitch / OCTAVE_SIZE) - 1
+  const offset = pitch - (octave + 1) * OCTAVE_SIZE
 
   let name = OFFSETS[offset] as string | undefined
   if (!name) {
@@ -106,7 +106,7 @@ export function parseNote(note: string): number {
     throw new Error(`Invalid note letter: ${letter}`)
   }
 
-  let n = (OFFSETS[letter] as number) + parseInt(octave, 10) * OCTAVE_SIZE
+  let n = (OFFSETS[letter] as number) + (parseInt(octave, 10) + 1) * OCTAVE_SIZE
 
   if (accidental == "#") {
     n += 1
