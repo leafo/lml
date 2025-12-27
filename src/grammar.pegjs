@@ -76,7 +76,7 @@ rest
   }
 
 noteTiming
-  = duration:("." d:$[0-9]+ { return +d } / "/" d:$[0-9]+ { return 1/+d })? start:("@" s:$[0-9]+ { return +s })? &{ return duration !== null || start !== null } {
+  = duration:("." d:$([0-9] |1..3|) { return +d } / "/" d:$([0-9] |1..3|) { return 1/+d })? start:("@" s:$[0-9]+ { return +s })? &{ return duration !== null || start !== null } {
     let timing = {}
     if (duration !== null) timing.duration = duration
     if (start !== null) timing.start = start
@@ -84,7 +84,7 @@ noteTiming
   }
 
 restTiming
-  = duration:$[0-9]+ start:("@" s:$[0-9]+ { return +s })? {
+  = duration:$([0-9] |1..3|) start:("@" s:$[0-9]+ { return +s })? {
     let timing = { duration: +duration }
     if (start !== null) timing.start = start
     return timing

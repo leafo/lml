@@ -82,6 +82,17 @@ describe("parseNoteString", () => {
     assert.strictEqual(parseNoteString("xyz"), null)
     assert.strictEqual(parseNoteString(""), null)
   })
+
+  it("parses 3-digit duration", () => {
+    const result = parseNoteString("c5.999")
+    assert.strictEqual(result?.duration, 999)
+  })
+
+  it("rejects 4+ digit duration", () => {
+    // 4-digit duration should fail to parse (only first 3 digits match)
+    assert.strictEqual(parseNoteString("c5.1234"), null)
+    assert.strictEqual(parseNoteString("c5/1234"), null)
+  })
 })
 
 describe("serializeNote", () => {
