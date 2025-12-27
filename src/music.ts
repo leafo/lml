@@ -243,6 +243,11 @@ export class KeySignature {
     return note
   }
 
+  // Convert MIDI pitch to note name with correct enharmonic spelling for this key
+  noteName(pitch: number): string {
+    return noteName(pitch, !this.isFlat())
+  }
+
   // which notes have accidentals in this key
   accidentalNotes(): string[] {
     const fifths = KeySignature.FIFTHS_TRUNCATED
