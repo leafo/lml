@@ -51,8 +51,10 @@ restoreStartPosition
 
 note
   = name:[a-gA-G] accidental:[+=-] ? octave:[0-9]? timing:noteTiming ? {
+    let loc = location()
     let opts = {
-      ...timing
+      ...timing,
+      location: [loc.start.offset, loc.end.offset]
     }
 
     if (accidental == "+") {
@@ -63,11 +65,7 @@ note
       opts.natural = true
     }
 
-    let note = ["note", `${name.toUpperCase()}${octave ?? ""}`]
-    if (timing || accidental) {
-     note.push(opts)
-    }
-    return note
+    return ["note", `${name.toUpperCase()}${octave ?? ""}`, opts]
   }
 
 rest

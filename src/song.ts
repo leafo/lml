@@ -8,18 +8,21 @@ export class SongNote {
   note: string
   start: number
   duration: number
+  sourceLocation?: [number, number]  // [startOffset, endOffset] in source string
 
-  constructor(note: string, start: number, duration: number) {
+  constructor(note: string, start: number, duration: number, sourceLocation?: [number, number]) {
     this.id = Symbol()
     this.note = note
     this.start = start
     this.duration = duration
+    this.sourceLocation = sourceLocation
   }
 
   clone(): SongNote {
-    return new SongNote(
-      this.note, this.start, this.duration
+    const cloned = new SongNote(
+      this.note, this.start, this.duration, this.sourceLocation
     )
+    return cloned
   }
 
   inRange(min: number, max: number): boolean {
@@ -33,7 +36,7 @@ export class SongNote {
 
   transpose(semitones: number): SongNote {
     return new SongNote(
-      noteName(parseNote(this.note) + semitones), this.start, this.duration
+      noteName(parseNote(this.note) + semitones), this.start, this.duration, this.sourceLocation
     )
   }
 

@@ -11,6 +11,25 @@ import { SongNote } from "../src/song.js"
 const stripIds = (notes: SongNote[]) =>
   notes.map(n => ({ note: n.note, start: n.start, duration: n.duration }))
 
+// Helper to strip location from parsed AST for cleaner test comparisons
+type ASTNode = ReturnType<typeof SongParser.prototype.parse>[number]
+const stripLocations = (ast: ASTNode[]): ASTNode[] => {
+  return ast.map(node => {
+    if (node[0] === "note") {
+      const [type, name, opts] = node
+      if (opts) {
+        const { location, ...rest } = opts
+        return Object.keys(rest).length > 0 ? [type, name, rest] : [type, name]
+      }
+      return node
+    }
+    if (node[0] === "block") {
+      return ["block", stripLocations(node[1])]
+    }
+    return node
+  }) as ASTNode[]
+}
+
 const matchNotes = (have: SongNote[], expected: SongNote[]) => {
   assert.deepStrictEqual(stripIds(have), stripIds(expected))
 }
@@ -24,21 +43,21 @@ describe("parse", () => {
 
   describe("notes", () => {
     it("parses single note", () => {
-      assert.deepStrictEqual(parser.parse("a5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a5")), [
         ["note", "A5"]
       ])
     })
 
     it("parses note with whitespace", () => {
-      assert.deepStrictEqual(parser.parse(`
+      assert.deepStrictEqual(stripLocations(parser.parse(`
         a5
-      `), [
+      `)), [
         ["note", "A5"]
       ])
     })
 
     it("parses multiple notes", () => {
-      assert.deepStrictEqual(parser.parse("a5 b5 c6"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a5 b5 c6")), [
         ["note", "A5"],
         ["note", "B5"],
         ["note", "C6"]
@@ -46,25 +65,25 @@ describe("parse", () => {
     })
 
     it("parses note with duration", () => {
-      assert.deepStrictEqual(parser.parse("a5.2"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a5.2")), [
         ["note", "A5", { duration: 2 }]
       ])
     })
 
     it("parses note with duration and start", () => {
-      assert.deepStrictEqual(parser.parse("f3.1@2"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("f3.1@2")), [
         ["note", "F3", { duration: 1, start: 2 }]
       ])
     })
 
     it("parses note with only start position", () => {
-      assert.deepStrictEqual(parser.parse("c5@4"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("c5@4")), [
         ["note", "C5", { start: 4 }]
       ])
     })
 
     it("parses notes with timing information", () => {
-      assert.deepStrictEqual(parser.parse("g4 a5.1 b2 f3.1@2"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("g4 a5.1 b2 f3.1@2")), [
         ["note", "G4"],
         ["note", "A5", { duration: 1 }],
         ["note", "B2"],
@@ -73,25 +92,25 @@ describe("parse", () => {
     })
 
     it("parses sharp accidental", () => {
-      assert.deepStrictEqual(parser.parse("a+5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a+5")), [
         ["note", "A5", { sharp: true }]
       ])
     })
 
     it("parses flat accidental", () => {
-      assert.deepStrictEqual(parser.parse("a-5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a-5")), [
         ["note", "A5", { flat: true }]
       ])
     })
 
     it("parses natural accidental", () => {
-      assert.deepStrictEqual(parser.parse("a=5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a=5")), [
         ["note", "A5", { natural: true }]
       ])
     })
 
     it("parses all accidentals", () => {
-      assert.deepStrictEqual(parser.parse("a+5 a-5 a=5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a+5 a-5 a=5")), [
         ["note", "A5", { sharp: true }],
         ["note", "A5", { flat: true }],
         ["note", "A5", { natural: true }]
@@ -99,37 +118,37 @@ describe("parse", () => {
     })
 
     it("parses accidental with duration", () => {
-      assert.deepStrictEqual(parser.parse("c+5.2"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("c+5.2")), [
         ["note", "C5", { sharp: true, duration: 2 }]
       ])
     })
 
     it("parses duration divider", () => {
-      assert.deepStrictEqual(parser.parse("c5/2"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("c5/2")), [
         ["note", "C5", { duration: 0.5 }]
       ])
     })
 
     it("parses duration divider by 4", () => {
-      assert.deepStrictEqual(parser.parse("c5/4"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("c5/4")), [
         ["note", "C5", { duration: 0.25 }]
       ])
     })
 
     it("parses duration divider with start position", () => {
-      assert.deepStrictEqual(parser.parse("c5/2@4"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("c5/2@4")), [
         ["note", "C5", { duration: 0.5, start: 4 }]
       ])
     })
 
     it("parses duration divider with relative octave", () => {
-      assert.deepStrictEqual(parser.parse("c/2"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("c/2")), [
         ["note", "C", { duration: 0.5 }]
       ])
     })
 
     it("converts lowercase to uppercase", () => {
-      assert.deepStrictEqual(parser.parse("c5 D5 e5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("c5 D5 e5")), [
         ["note", "C5"],
         ["note", "D5"],
         ["note", "E5"]
@@ -169,7 +188,7 @@ describe("parse", () => {
     })
 
     it("parses notes and rests", () => {
-      assert.deepStrictEqual(parser.parse("g4.1 r2 a4.3 r b2"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("g4.1 r2 a4.3 r b2")), [
         ["note", "G4", { duration: 1 }],
         ["rest", { duration: 2 }],
         ["note", "A4", { duration: 3 }],
@@ -199,7 +218,7 @@ describe("parse", () => {
     })
 
     it("parses multiple key signatures", () => {
-      assert.deepStrictEqual(parser.parse("ks-4 g5 ks2 d6"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("ks-4 g5 ks2 d6")), [
         ["keySignature", -4],
         ["note", "G5"],
         ["keySignature", 2],
@@ -327,7 +346,7 @@ describe("parse", () => {
 
   describe("blocks", () => {
     it("parses a block", () => {
-      assert.deepStrictEqual(parser.parse("{ a5 }"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("{ a5 }")), [
         ["block", [
           ["note", "A5"]
         ]]
@@ -335,7 +354,7 @@ describe("parse", () => {
     })
 
     it("parses block with measure", () => {
-      assert.deepStrictEqual(parser.parse("m1 { a5 }"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("m1 { a5 }")), [
         ["measure", 1],
         ["block", [
           ["note", "A5"]
@@ -344,7 +363,7 @@ describe("parse", () => {
     })
 
     it("parses nested blocks", () => {
-      assert.deepStrictEqual(parser.parse("{ a5 { b5 } c5 }"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("{ a5 { b5 } c5 }")), [
         ["block", [
           ["note", "A5"],
           ["block", [
@@ -364,7 +383,7 @@ describe("parse", () => {
     })
 
     it("parses multiple restores", () => {
-      assert.deepStrictEqual(parser.parse("c5 | e5 | g5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("c5 | e5 | g5")), [
         ["note", "C5"],
         ["restoreStartPosition"],
         ["note", "E5"],
@@ -388,7 +407,7 @@ describe("parse", () => {
     })
 
     it("parses multiple tracks", () => {
-      assert.deepStrictEqual(parser.parse("t0 a5 t1 b5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("t0 a5 t1 b5")), [
         ["setTrack", 0],
         ["note", "A5"],
         ["setTrack", 1],
@@ -447,14 +466,14 @@ describe("parse", () => {
 
   describe("comments", () => {
     it("ignores a comment", () => {
-      assert.deepStrictEqual(parser.parse(`
+      assert.deepStrictEqual(stripLocations(parser.parse(`
         # this is comment
         a5 c5 # a good one
 
         #more comment
 
         b6 #a5
-      `), [
+      `)), [
         ["note", "A5"],
         ["note", "C5"],
         ["note", "B6"]
@@ -462,7 +481,7 @@ describe("parse", () => {
     })
 
     it("ignores comment at start of input", () => {
-      assert.deepStrictEqual(parser.parse("# comment at start\na5 b5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("# comment at start\na5 b5")), [
         ["note", "A5"],
         ["note", "B5"]
       ])
@@ -471,14 +490,14 @@ describe("parse", () => {
 
   describe("frontmatter", () => {
     it("parses single frontmatter line", () => {
-      assert.deepStrictEqual(parser.parse("# title: My Song\na5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("# title: My Song\na5")), [
         ["frontmatter", "title", "My Song"],
         ["note", "A5"]
       ])
     })
 
     it("parses multiple frontmatter lines", () => {
-      assert.deepStrictEqual(parser.parse("# title: My Song\n# author: Test\n# bpm: 120\na5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("# title: My Song\n# author: Test\n# bpm: 120\na5")), [
         ["frontmatter", "title", "My Song"],
         ["frontmatter", "author", "Test"],
         ["frontmatter", "bpm", "120"],
@@ -487,42 +506,42 @@ describe("parse", () => {
     })
 
     it("handles frontmatter with no space after #", () => {
-      assert.deepStrictEqual(parser.parse("#title: My Song\na5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("#title: My Song\na5")), [
         ["frontmatter", "title", "My Song"],
         ["note", "A5"]
       ])
     })
 
     it("handles frontmatter with extra whitespace", () => {
-      assert.deepStrictEqual(parser.parse("#  title  :  My Song  \na5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("#  title  :  My Song  \na5")), [
         ["frontmatter", "title", "My Song"],
         ["note", "A5"]
       ])
     })
 
     it("handles underscore in key name", () => {
-      assert.deepStrictEqual(parser.parse("# my_key: value\na5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("# my_key: value\na5")), [
         ["frontmatter", "my_key", "value"],
         ["note", "A5"]
       ])
     })
 
     it("returns no frontmatter when none present", () => {
-      assert.deepStrictEqual(parser.parse("a5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a5")), [
         ["note", "A5"]
       ])
     })
 
     it("distinguishes frontmatter from regular comments", () => {
       // Regular comment (no colon pattern) should not be frontmatter
-      assert.deepStrictEqual(parser.parse("# this is a comment\na5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("# this is a comment\na5")), [
         ["note", "A5"]
       ])
     })
 
     it("stops parsing frontmatter after non-frontmatter content", () => {
       // Once we hit a non-frontmatter line, subsequent # key: lines are just comments
-      assert.deepStrictEqual(parser.parse("# title: Song\na5\n# author: Test\nb5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("# title: Song\na5\n# author: Test\nb5")), [
         ["frontmatter", "title", "Song"],
         ["note", "A5"],
         ["note", "B5"]
@@ -530,7 +549,7 @@ describe("parse", () => {
     })
 
     it("is case-sensitive for keys", () => {
-      assert.deepStrictEqual(parser.parse("# Title: One\n# title: Two\na5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("# Title: One\n# title: Two\na5")), [
         ["frontmatter", "Title", "One"],
         ["frontmatter", "title", "Two"],
         ["note", "A5"]
@@ -538,14 +557,14 @@ describe("parse", () => {
     })
 
     it("handles empty value", () => {
-      assert.deepStrictEqual(parser.parse("# key:\na5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("# key:\na5")), [
         ["frontmatter", "key", ""],
         ["note", "A5"]
       ])
     })
 
     it("handles value with special characters", () => {
-      assert.deepStrictEqual(parser.parse("# title: Hello: World! (test) [1,2,3]\na5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("# title: Hello: World! (test) [1,2,3]\na5")), [
         ["frontmatter", "title", "Hello: World! (test) [1,2,3]"],
         ["note", "A5"]
       ])
@@ -566,7 +585,7 @@ describe("parse", () => {
     })
 
     it("parses string with notes", () => {
-      assert.deepStrictEqual(parser.parse('c5 "la" d5 "la"'), [
+      assert.deepStrictEqual(stripLocations(parser.parse('c5 "la" d5 "la"')), [
         ["note", "C5"],
         ["string", "la"],
         ["note", "D5"],
@@ -613,21 +632,21 @@ describe("parse", () => {
 
   describe("whitespace", () => {
     it("handles multiple spaces", () => {
-      assert.deepStrictEqual(parser.parse("a5    b5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a5    b5")), [
         ["note", "A5"],
         ["note", "B5"]
       ])
     })
 
     it("handles tabs", () => {
-      assert.deepStrictEqual(parser.parse("a5\tb5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a5\tb5")), [
         ["note", "A5"],
         ["note", "B5"]
       ])
     })
 
     it("handles newlines", () => {
-      assert.deepStrictEqual(parser.parse("a5\nb5"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a5\nb5")), [
         ["note", "A5"],
         ["note", "B5"]
       ])
@@ -1526,7 +1545,7 @@ describe("parse errors", () => {
 
   it("parses note without octave (relative octave)", () => {
     // Notes without octaves are now valid (relative octave mode)
-    assert.deepStrictEqual(parser.parse("c"), [["note", "C"]])
+    assert.deepStrictEqual(stripLocations(parser.parse("c")), [["note", "C"]])
   })
 
   it("throws on invalid note letter", () => {

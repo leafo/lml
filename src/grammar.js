@@ -267,8 +267,10 @@ function peg$parse(input, options) {
     return ["restoreStartPosition"]
   }
   function peg$f10(name, accidental, octave, timing) {
+    let loc = location()
     let opts = {
-      ...timing
+      ...timing,
+      location: [loc.start.offset, loc.end.offset]
     }
 
     if (accidental == "+") {
@@ -279,11 +281,7 @@ function peg$parse(input, options) {
       opts.natural = true
     }
 
-    let note = ["note", `${name.toUpperCase()}${octave ?? ""}`]
-    if (timing || accidental) {
-     note.push(opts)
-    }
-    return note
+    return ["note", `${name.toUpperCase()}${octave ?? ""}`, opts]
   }
   function peg$f11(timing) {
     let rest = ["rest"]

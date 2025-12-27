@@ -60,6 +60,7 @@ export type NoteOpts = {
   sharp?: boolean
   flat?: boolean
   natural?: boolean
+  location?: [number, number]  // [startOffset, endOffset]
 }
 
 export type ASTNode =
@@ -313,7 +314,7 @@ export default class SongParser {
 
           // Convert ticks to beats for SongNote
           song.pushWithTrack(
-            new SongNote(noteName, startTicks / TICKS_PER_BEAT, durationTicks / TICKS_PER_BEAT),
+            new SongNote(noteName, startTicks / TICKS_PER_BEAT, durationTicks / TICKS_PER_BEAT, noteOpts?.location),
             state.currentTrack
           )
           break
