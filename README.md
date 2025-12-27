@@ -442,6 +442,24 @@ Current limitations that may be addressed in future versions:
 
 - **Key signature metadata is global**: While key signatures (`ks`) can change mid-song and correctly affect note parsing, the metadata only stores the final value. Renderers cannot determine where key signature changes occur within the song. (Time signature changes are tracked via `song.timeSignatures` and `song.getMeasures()`.)
 
+- **Time signature changes should be placed at measure boundaries**: Time signatures are recorded at the cursor position when parsed. When combined with measure markers (`m`) and notes that extend past measure boundaries, the recorded position may not align with where the measure actually starts. For predictable behavior, place time signature changes immediately after a measure marker (which positions the cursor at the boundary):
+
+```
+# Recommended: time signature is always applied at start of measure
+m ts4/4 c d e f
+m ts3/4 g a b
+
+# Although you can also write it before the m command, if the previous measure
+# accidentally pushed the cursor into the next measure then the time signature
+# application will be delayed a measure:
+
+ts3/4
+m g.4       # extends 1 beat past 3-beat measure
+ts4/4       # recorded at beat 4, but next measure starts at beat 3
+m a b c d
+
+```
+
 - **No explicit grand staff**: Grand staff is only available through auto-detection when notes span both treble and bass registers. There is no syntax to explicitly request a grand staff.
 
 ## License

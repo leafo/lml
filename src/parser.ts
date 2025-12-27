@@ -236,11 +236,9 @@ export default class SongParser {
             state.nextMeasureStart = (measureNum + 1) * state.ticksPerMeasure
             state.explicitMeasureUsed = true
           } else {
-            // Auto-increment - use max of expected boundary or actual position
-            // This handles: 1) notes that don't fill the measure (jump to boundary)
-            //               2) blocks with different time sig (continue from where we are)
+            // Auto-increment - always jump to next measure boundary
             state.lastMeasure += 1
-            state.position = Math.max(state.nextMeasureStart, state.position)
+            state.position = state.nextMeasureStart
             state.nextMeasureStart = state.position + state.ticksPerMeasure
             state.explicitMeasureUsed = false
           }

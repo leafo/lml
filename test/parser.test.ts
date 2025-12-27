@@ -1401,6 +1401,53 @@ describe("load", () => {
       const starts = [...song].map(n => n.start)
       assert.deepStrictEqual(starts, [0, 1, 20, 21, 24, 25])
     })
+
+    it("notes extending past measure boundary don't push next measure", () => {
+      // g.5 extends 1 beat past the 4-beat measure, but the next measure
+      // still starts at beat 4 (the boundary), not beat 5
+      const song = SongParser.load(`m g.5 m a`)
+      const notes = [...song]
+      assert.strictEqual(notes[0].start, 0)
+      assert.strictEqual(notes[0].duration, 5)
+      assert.strictEqual(notes[1].start, 4)  // starts at measure boundary, overlapping with g
+    })
+
+    it("time signatures recorded at cursor position, not measure boundary", () => {
+      // When a note extends past a measure boundary, time signature changes
+      // are recorded at the cursor position (after the note), not at the
+      // upcoming measure boundary. This can cause getMeasures() to report
+      // the old time signature for measures that start before the recorded position.
+      const song = SongParser.load(`
+        ts3/4
+        m g.4
+
+        ts4/4
+        m a.4
+
+        ts2/2
+        m g
+      `)
+
+      const notes = [...song]
+      // Notes start at correct measure boundaries
+      assert.strictEqual(notes[0].start, 0)   // measure 0
+      assert.strictEqual(notes[1].start, 3)   // measure 1 (3 beats into song)
+      assert.strictEqual(notes[2].start, 7)   // measure 2 (3 + 4 beats)
+
+      // Time signatures are recorded at cursor position, not measure boundary
+      // ts4/4 is at beat 4 (where g.4 ended), not beat 3 (where measure 1 starts)
+      assert.deepStrictEqual(song.timeSignatures, [
+        [0, 3],  // ts3/4 at beat 0
+        [4, 4],  // ts4/4 at beat 4 (cursor position after g.4)
+        [7, 2],  // ts2/2 at beat 7
+      ])
+
+      // getMeasures() uses recorded positions, so measure 1 (starting at beat 3)
+      // still sees ts3/4 because ts4/4 wasn't recorded until beat 4
+      const measures = song.getMeasures()
+      assert.deepStrictEqual(measures[0], { start: 0, beats: 3 })
+      assert.deepStrictEqual(measures[1], { start: 3, beats: 3 })  // gets old time sig
+    })
   })
 
   describe("relative octave", () => {
