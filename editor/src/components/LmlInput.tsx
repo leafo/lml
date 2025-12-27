@@ -73,6 +73,9 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
       const parsed = parseNoteString(oldText)
       if (!parsed) return
 
+      // Preserve original case from source text
+      const isLowercase = oldText[0] === oldText[0].toLowerCase()
+
       // Transpose using the already-computed note.note (which is normalized)
       const newPitch = parseNote(note.note) + semitones
       const newNoteStr = noteName(newPitch)  // e.g., "C#5" or "D5"
@@ -81,9 +84,6 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
       const newNoteMatch = newNoteStr.match(/^([A-G])(#)?(\d+)$/)
       if (!newNoteMatch) return
       const [, newBaseLetter, hasSharp, newOctaveNum] = newNoteMatch
-
-      // Preserve original case
-      const isLowercase = parsed.name === parsed.name.toLowerCase()
 
       // Update parsed note with new pitch info
       parsed.name = isLowercase ? newBaseLetter.toLowerCase() : newBaseLetter
@@ -144,8 +144,8 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
       const parsed = parseNoteString(oldText)
       if (!parsed) return
 
-      // Preserve original case
-      const isLowercase = parsed.name === parsed.name.toLowerCase()
+      // Preserve original case from source text
+      const isLowercase = oldText[0] === oldText[0].toLowerCase()
 
       // Step the duration
       parsed.duration = stepDuration(parsed.duration, delta, pow2)
