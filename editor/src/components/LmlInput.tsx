@@ -120,7 +120,7 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
     onChange(newLmlText)
   }
 
-  const handleDurationChange = (delta: number) => {
+  const handleDurationChange = (delta: number, pow2 = false) => {
     // delta: +1 to increase duration, -1 to decrease
     if (!songObj || !textareaRef.current) return
 
@@ -148,7 +148,7 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
       const isLowercase = parsed.name === parsed.name.toLowerCase()
 
       // Step the duration
-      parsed.duration = stepDuration(parsed.duration, delta)
+      parsed.duration = stepDuration(parsed.duration, delta, pow2)
 
       const newText = serializeNote(parsed, isLowercase)
       replacements.push([start, end, newText])
@@ -188,7 +188,7 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
     } else if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
       e.preventDefault()
       const delta = e.key === 'ArrowRight' ? 1 : -1
-      handleDurationChange(delta)
+      handleDurationChange(delta, e.shiftKey)
     }
   }
 

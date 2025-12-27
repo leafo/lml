@@ -186,4 +186,45 @@ describe("stepDuration", () => {
   it("steps from /4 to /3 with delta +1", () => {
     assert.strictEqual(stepDuration(0.25, 1), 1/3)
   })
+
+  // pow2 mode tests
+  it("pow2: steps from default to .2 with delta +1", () => {
+    assert.strictEqual(stepDuration(undefined, 1, true), 2)
+  })
+
+  it("pow2: steps from default to /2 with delta -1", () => {
+    assert.strictEqual(stepDuration(undefined, -1, true), 0.5)
+  })
+
+  it("pow2: steps from .2 to .4 with delta +1", () => {
+    assert.strictEqual(stepDuration(2, 1, true), 4)
+  })
+
+  it("pow2: steps from .4 to .2 with delta -1", () => {
+    assert.strictEqual(stepDuration(4, -1, true), 2)
+  })
+
+  it("pow2: steps from .2 to default with delta -1", () => {
+    assert.strictEqual(stepDuration(2, -1, true), undefined)
+  })
+
+  it("pow2: steps from /2 to default with delta +1", () => {
+    assert.strictEqual(stepDuration(0.5, 1, true), undefined)
+  })
+
+  it("pow2: steps from /2 to /4 with delta -1", () => {
+    assert.strictEqual(stepDuration(0.5, -1, true), 0.25)
+  })
+
+  it("pow2: steps from /4 to /2 with delta +1", () => {
+    assert.strictEqual(stepDuration(0.25, 1, true), 0.5)
+  })
+
+  it("pow2: steps from /8 to /4 with delta +1", () => {
+    assert.strictEqual(stepDuration(0.125, 1, true), 0.25)
+  })
+
+  it("pow2: steps from .4 to .8 with delta +1", () => {
+    assert.strictEqual(stepDuration(4, 1, true), 8)
+  })
 })
