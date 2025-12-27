@@ -7,6 +7,7 @@ import {
   Root5AutoChords,
   ArpAutoChords,
   BossaNovaAutoChords,
+  SongNoteList,
 } from '@leafo/lml'
 import { LmlInput } from './components/LmlInput'
 import { OutputTabs } from './components/OutputTabs'
@@ -43,31 +44,18 @@ export function App() {
       tracks?: { note: string; start: number; duration: number; sourceLocation?: [number, number] }[][]
       measures?: { start: number; beats: number }[]
     } | null
+    songObj: SongNoteList | null
     error: string | null
     timing: { parse: number; compile: number } | null
-  }>({ ast: null, song: null, error: null, timing: null })
+  }>({ ast: null, song: null, songObj: null, error: null, timing: null })
   const [canvasTime, setCanvasTime] = useState<number | null>(null)
   const [cursorPosition, setCursorPosition] = useState<[number, number]>([0, 0])
 
   // Compute highlighted notes based on cursor position
   const highlightedNotes = useMemo(() => {
-    if (!parseResult.song?.notes) return new Set<number>()
-
-    const [cursorStart, cursorEnd] = cursorPosition
-    const highlighted = new Set<number>()
-
-    parseResult.song.notes.forEach((note, index) => {
-      if (!note.sourceLocation) return
-      const [noteStart, noteEnd] = note.sourceLocation
-
-      // Check if cursor/selection overlaps with note's source location
-      if (cursorStart <= noteEnd && cursorEnd >= noteStart) {
-        highlighted.add(index)
-      }
-    })
-
-    return highlighted
-  }, [cursorPosition[0], cursorPosition[1], parseResult.song?.notes])
+    if (!parseResult.songObj) return new Set<number>()
+    return parseResult.songObj.findNotesForSelection(cursorPosition[0], cursorPosition[1])
+  }, [cursorPosition[0], cursorPosition[1], parseResult.songObj])
 
   const handleChange = useCallback((text: string) => {
     setLmlText(text)
@@ -107,6 +95,7 @@ export function App() {
       setParseResult({
         ast,
         song: songData,
+        songObj: song,
         error: null,
         timing: {
           parse: parseEnd - parseStart,
@@ -117,6 +106,7 @@ export function App() {
       setParseResult({
         ast: null,
         song: null,
+        songObj: null,
         error: e instanceof Error ? e.message : String(e),
         timing: null,
       })

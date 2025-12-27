@@ -126,6 +126,19 @@ export class SongNoteList extends Array<SongNote> {
     return [...this.filter((n) => n.inRange(start, stop))]
   }
 
+  // find note indices that overlap with the given source position range
+  findNotesForSelection(start: number, end: number): Set<number> {
+    const result = new Set<number>()
+    this.forEach((note, index) => {
+      if (!note.sourceLocation) return
+      const [noteStart, noteEnd] = note.sourceLocation
+      if (start <= noteEnd && end >= noteStart) {
+        result.add(index)
+      }
+    })
+    return result
+  }
+
   getStopInBeats(): number {
     if (this.length == 0) { return 0 }
     return Math.max.apply(null, this.map((n) => n.getStop()))
