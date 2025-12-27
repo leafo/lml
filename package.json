@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "build:grammar": "peggy --format es -o src/grammar.js src/grammar.pegjs",
+    "build:grammar": "peggy --format es --allowed-start-rules start,note -o src/grammar.js src/grammar.pegjs",
     "build:ts": "tsc",
     "build": "npm run build:grammar && npm run build:ts",
     "clean": "rm -rf dist src/grammar.js",

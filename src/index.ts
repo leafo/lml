@@ -53,3 +53,7 @@ export type { AutoChordsOptions, ChordBlock } from "./auto-chords.js"
 
 // Note list
 export { default as NoteList } from "./note-list.js"
+
+// Note utilities (for parsing/serializing individual notes)
+export { parseNoteString, serializeNote, stepDuration } from "./noteUtils.js"
+export type { ParsedNote } from "./noteUtils.js"

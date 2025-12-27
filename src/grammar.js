@@ -161,6 +161,7 @@ function peg$parse(input, options) {
 
   const peg$startRuleFunctions = {
     start: peg$parsestart,
+    note: peg$parsenote,
   };
   let peg$startRuleFunction = peg$parsestart;
 
@@ -2160,7 +2161,8 @@ function peg$parse(input, options) {
 }
 
 const peg$allowedStartRules = [
-  "start"
+  "start",
+  "note"
 ];
 
 export {
