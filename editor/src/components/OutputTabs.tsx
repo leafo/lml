@@ -1,16 +1,16 @@
-import { useState, useDeferredValue } from 'react'
+import { useState, useDeferredValue, memo } from 'react'
 import { JsonTree } from './JsonTree'
 
 interface OutputTabsProps {
   ast: unknown
   song: unknown
   error: string | null
-  timing: { parse: number; compile: number; canvas: number | null } | null
+  timing: { parse: number; compile: number } | null
 }
 
 type Tab = 'ast' | 'song'
 
-export function OutputTabs({ ast, song, error, timing }: OutputTabsProps) {
+export const OutputTabs = memo(function OutputTabs({ ast, song, error, timing }: OutputTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('ast')
 
   // Defer expensive JsonTree renders so typing stays responsive
@@ -43,7 +43,6 @@ export function OutputTabs({ ast, song, error, timing }: OutputTabsProps) {
           {timing && (
             <span className="timing">
               parse: {formatTime(timing.parse)} | compile: {formatTime(timing.compile)}
-              {timing.canvas != null && <> | canvas: {formatTime(timing.canvas)}</>}
             </span>
           )}
           <button
@@ -67,4 +66,4 @@ export function OutputTabs({ ast, song, error, timing }: OutputTabsProps) {
       </div>
     </div>
   )
-}
+})

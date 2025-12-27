@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from 'react'
+import { useRef, useEffect, useCallback, useState, memo } from 'react'
 import { parseNote } from '../../../dist/index.js'
 
 interface Note {
@@ -15,6 +15,7 @@ interface Measure {
 interface PianoRollProps {
   tracks?: Note[][]
   measures?: Measure[]
+  highlightedNotes?: Set<number>
   onRenderTime?: (ms: number) => void
 }
 
@@ -31,7 +32,7 @@ const TRACK_COLORS = [
   '#aa96da',  // purple (track 5)
 ]
 
-export function PianoRoll({ tracks, measures, onRenderTime }: PianoRollProps) {
+export const PianoRoll = memo(function PianoRoll({ tracks, measures, highlightedNotes, onRenderTime }: PianoRollProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [scrollOffset, setScrollOffset] = useState(0)
@@ -66,9 +67,10 @@ export function PianoRoll({ tracks, measures, onRenderTime }: PianoRollProps) {
     ctx.fillStyle = '#0f0f23'
     ctx.fillRect(0, 0, rect.width, rect.height)
 
-    // Flatten tracks into notes with track index
+    // Flatten tracks into notes with track index and original index
+    let noteIndex = 0
     const allNotes = tracks?.flatMap((track, trackIndex) =>
-      track.map(n => ({ ...n, trackIndex }))
+      track.map(n => ({ ...n, trackIndex, originalIndex: noteIndex++ }))
     ) ?? []
 
     if (allNotes.length === 0) {
@@ -85,6 +87,7 @@ export function PianoRoll({ tracks, measures, onRenderTime }: PianoRollProps) {
       duration: n.duration,
       name: n.note,
       trackIndex: n.trackIndex,
+      originalIndex: n.originalIndex,
     }))
 
     const pitches = parsedNotes.map(n => n.pitch)
@@ -177,16 +180,32 @@ export function PianoRoll({ tracks, measures, onRenderTime }: PianoRollProps) {
       const height = noteHeight - 2
 
       // Note fill - color based on track
+      const isHighlighted = highlightedNotes?.has(note.originalIndex)
+
       ctx.fillStyle = TRACK_COLORS[note.trackIndex % TRACK_COLORS.length]
       ctx.beginPath()
       ctx.roundRect(x + 1, y + 1, width, height, 3)
       ctx.fill()
 
+      // Highlight border if note is selected
+      if (isHighlighted) {
+        ctx.strokeStyle = '#ffffff'
+        ctx.lineWidth = 2
+        ctx.stroke()
+      }
+
       // Note label (if wide enough)
       if (width > 30) {
-        ctx.fillStyle = '#fff'
         ctx.font = '10px monospace'
-        ctx.fillText(note.name, x + 5, y + height - 2)
+        const labelX = x + 5
+        const labelY = y + height - 2
+        // Draw text outline for readability
+        ctx.strokeStyle = '#000'
+        ctx.lineWidth = 3
+        ctx.strokeText(note.name, labelX, labelY)
+        // Draw text fill
+        ctx.fillStyle = '#fff'
+        ctx.fillText(note.name, labelX, labelY)
       }
     }
 
@@ -206,7 +225,7 @@ export function PianoRoll({ tracks, measures, onRenderTime }: PianoRollProps) {
     }
 
     onRenderTime?.(performance.now() - start)
-  }, [tracks, measures, onRenderTime, scrollOffset])
+  }, [tracks, measures, highlightedNotes, onRenderTime, scrollOffset])
 
   useEffect(() => {
     draw()
@@ -267,4 +286,4 @@ export function PianoRoll({ tracks, measures, onRenderTime }: PianoRollProps) {
       />
     </div>
   )
-}
+})

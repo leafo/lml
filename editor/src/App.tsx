@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import {
   SongParser,
   AutoChords,
@@ -38,15 +38,36 @@ export function App() {
   const [parseResult, setParseResult] = useState<{
     ast: unknown
     song: {
-      notes: { note: string; start: number; duration: number }[]
+      notes: { note: string; start: number; duration: number; sourceLocation?: [number, number] }[]
       metadata?: { beatsPerMeasure?: number }
-      tracks?: { note: string; start: number; duration: number }[][]
+      tracks?: { note: string; start: number; duration: number; sourceLocation?: [number, number] }[][]
       measures?: { start: number; beats: number }[]
     } | null
     error: string | null
     timing: { parse: number; compile: number } | null
   }>({ ast: null, song: null, error: null, timing: null })
   const [canvasTime, setCanvasTime] = useState<number | null>(null)
+  const [cursorPosition, setCursorPosition] = useState<[number, number]>([0, 0])
+
+  // Compute highlighted notes based on cursor position
+  const highlightedNotes = useMemo(() => {
+    if (!parseResult.song?.notes) return new Set<number>()
+
+    const [cursorStart, cursorEnd] = cursorPosition
+    const highlighted = new Set<number>()
+
+    parseResult.song.notes.forEach((note, index) => {
+      if (!note.sourceLocation) return
+      const [noteStart, noteEnd] = note.sourceLocation
+
+      // Check if cursor/selection overlaps with note's source location
+      if (cursorStart <= noteEnd && cursorEnd >= noteStart) {
+        highlighted.add(index)
+      }
+    })
+
+    return highlighted
+  }, [cursorPosition[0], cursorPosition[1], parseResult.song?.notes])
 
   const handleChange = useCallback((text: string) => {
     setLmlText(text)
@@ -71,12 +92,14 @@ export function App() {
           note: note.note,
           start: note.start,
           duration: note.duration,
+          sourceLocation: note.sourceLocation,
         })),
         metadata: song.metadata,
         tracks: song.tracks?.map(track => [...track].map(note => ({
           note: note.note,
           start: note.start,
           duration: note.duration,
+          sourceLocation: note.sourceLocation,
         }))),
         measures: song.getMeasures(),
       }
@@ -111,12 +134,12 @@ export function App() {
         <h1>LML Editor</h1>
       </header>
       <main className="main">
-        <LmlInput value={lmlText} onChange={handleChange} />
+        <LmlInput value={lmlText} onChange={handleChange} onSelectionChange={setCursorPosition} />
         <OutputTabs
           ast={parseResult.ast}
           song={parseResult.song}
           error={parseResult.error}
-          timing={parseResult.timing ? { ...parseResult.timing, canvas: canvasTime } : null}
+          timing={parseResult.timing}
         />
       </main>
       <div className="toolbar">
@@ -133,10 +156,16 @@ export function App() {
             ))}
           </select>
         </label>
+        {canvasTime != null && (
+          <span className="canvas-timing">
+            canvas: {canvasTime < 1 ? `${(canvasTime * 1000).toFixed(0)}µs` : `${canvasTime.toFixed(2)}ms`}
+          </span>
+        )}
       </div>
       <PianoRoll
         tracks={parseResult.song?.tracks}
         measures={parseResult.song?.measures}
+        highlightedNotes={highlightedNotes}
         onRenderTime={setCanvasTime}
       />
     </div>
