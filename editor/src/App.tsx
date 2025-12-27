@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   SongParser,
   AutoChords,
@@ -9,7 +9,7 @@ import {
   BossaNovaAutoChords,
   SongNoteList,
 } from '@leafo/lml'
-import { LmlInput } from './components/LmlInput'
+import { LmlInput, LmlInputHandle } from './components/LmlInput'
 import { OutputTabs } from './components/OutputTabs'
 import { PianoRoll } from './components/PianoRoll'
 
@@ -34,7 +34,7 @@ c6.4
 `
 
 export function App() {
-  const [lmlText, setLmlText] = useState(DEFAULT_LML)
+  const inputRef = useRef<LmlInputHandle>(null)
   const [autoChordType, setAutoChordType] = useState("Root5AutoChords")
   const [parseResult, setParseResult] = useState<{
     ast: unknown
@@ -58,8 +58,6 @@ export function App() {
   }, [cursorPosition[0], cursorPosition[1], parseResult.songObj])
 
   const handleChange = useCallback((text: string) => {
-    setLmlText(text)
-
     try {
       const parser = new SongParser()
 
@@ -115,7 +113,9 @@ export function App() {
 
   // Recompile when autoChordType changes
   useEffect(() => {
-    handleChange(lmlText)
+    if (inputRef.current) {
+      handleChange(inputRef.current.getValue())
+    }
   }, [autoChordType, handleChange])
 
   return (
@@ -124,7 +124,13 @@ export function App() {
         <h1>LML Editor</h1>
       </header>
       <main className="main">
-        <LmlInput value={lmlText} onChange={handleChange} onSelectionChange={setCursorPosition} />
+        <LmlInput
+          ref={inputRef}
+          defaultValue={DEFAULT_LML}
+          onChange={handleChange}
+          onSelectionChange={setCursorPosition}
+          songObj={parseResult.songObj}
+        />
         <OutputTabs
           ast={parseResult.ast}
           song={parseResult.song}
