@@ -1,8 +1,25 @@
-import { useState, useCallback } from 'react'
-import { SongParser } from '@leafo/lml'
+import { useState, useCallback, useEffect } from 'react'
+import {
+  SongParser,
+  AutoChords,
+  RootAutoChords,
+  TriadAutoChords,
+  Root5AutoChords,
+  ArpAutoChords,
+  BossaNovaAutoChords,
+} from '@leafo/lml'
 import { LmlInput } from './components/LmlInput'
 import { OutputTabs } from './components/OutputTabs'
 import { PianoRoll } from './components/PianoRoll'
+
+const AUTO_CHORD_OPTIONS: { value: string; label: string; generator: typeof AutoChords | false }[] = [
+  { value: "disabled", label: "Disabled", generator: false },
+  { value: "RootAutoChords", label: "Root", generator: RootAutoChords },
+  { value: "TriadAutoChords", label: "Triad", generator: TriadAutoChords },
+  { value: "Root5AutoChords", label: "Root+5", generator: Root5AutoChords },
+  { value: "ArpAutoChords", label: "Arp", generator: ArpAutoChords },
+  { value: "BossaNovaAutoChords", label: "Bossa Nova", generator: BossaNovaAutoChords },
+]
 
 const DEFAULT_LML = `# title: Example Song
 # bpm: 120
@@ -17,6 +34,7 @@ c6.4
 
 export function App() {
   const [lmlText, setLmlText] = useState(DEFAULT_LML)
+  const [autoChordType, setAutoChordType] = useState("Root5AutoChords")
   const [parseResult, setParseResult] = useState<{
     ast: unknown
     song: {
@@ -40,8 +58,11 @@ export function App() {
       const ast = parser.parse(text)
       const parseEnd = performance.now()
 
+      const autoChordOption = AUTO_CHORD_OPTIONS.find(o => o.value === autoChordType)
       const compileStart = performance.now()
-      const song = parser.compile(ast)
+      const song = parser.compile(ast, {
+        autoChords: autoChordOption?.generator,
+      })
       const compileEnd = performance.now()
 
       // Convert song to a serializable format
@@ -77,7 +98,12 @@ export function App() {
         timing: null,
       })
     }
-  }, [])
+  }, [autoChordType])
+
+  // Recompile when autoChordType changes
+  useEffect(() => {
+    handleChange(lmlText)
+  }, [autoChordType, handleChange])
 
   return (
     <div className="app">
@@ -93,6 +119,21 @@ export function App() {
           timing={parseResult.timing ? { ...parseResult.timing, canvas: canvasTime } : null}
         />
       </main>
+      <div className="toolbar">
+        <label>
+          Auto Chords:
+          <select
+            value={autoChordType}
+            onChange={e => setAutoChordType(e.target.value)}
+          >
+            {AUTO_CHORD_OPTIONS.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <PianoRoll
         tracks={parseResult.song?.tracks}
         measures={parseResult.song?.measures}
