@@ -1,5 +1,5 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
-import { SongNoteList, parseNote, noteName } from '@leafo/lml'
+import { SongNoteList, parseNote, noteName, parseNoteString, serializeNote, stepDuration } from '@leafo/lml'
 
 interface LmlInputProps {
   defaultValue: string
@@ -61,8 +61,6 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
     if (noteIndices.size === 0) return
 
     const lmlText = textarea.value
-
-    // Build replacements array
     const replacements: [number, number, string][] = []
 
     noteIndices.forEach(idx => {
@@ -72,32 +70,27 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
       const [start, end] = note.sourceLocation
       const oldText = lmlText.substring(start, end)
 
-      // Match note name: letter + optional accidental + optional octave
-      const match = oldText.match(/^([a-gA-G])([+=-])?(\d)?/)
-      if (!match) return
-
-      const [fullMatch, letter] = match
-      const restOfText = oldText.slice(fullMatch.length)
+      const parsed = parseNoteString(oldText)
+      if (!parsed) return
 
       // Transpose using the already-computed note.note (which is normalized)
       const newPitch = parseNote(note.note) + semitones
-      const newNoteName = noteName(newPitch)  // e.g., "C#5" or "D5"
+      const newNoteStr = noteName(newPitch)  // e.g., "C#5" or "D5"
 
       // Parse the new note name (letter, optional #, octave)
-      const newNoteMatch = newNoteName.match(/^([A-G])(#)?(\d+)$/)
+      const newNoteMatch = newNoteStr.match(/^([A-G])(#)?(\d+)$/)
       if (!newNoteMatch) return
       const [, newBaseLetter, hasSharp, newOctaveNum] = newNoteMatch
 
       // Preserve original case
-      const finalLetter = letter === letter.toLowerCase()
-        ? newBaseLetter.toLowerCase()
-        : newBaseLetter
+      const isLowercase = parsed.name === parsed.name.toLowerCase()
 
-      // Convert # to + for valid LML syntax
-      const finalAccidental = hasSharp ? '+' : ''
+      // Update parsed note with new pitch info
+      parsed.name = isLowercase ? newBaseLetter.toLowerCase() : newBaseLetter
+      parsed.accidental = hasSharp ? '+' : undefined
+      parsed.octave = newOctaveNum
 
-      const newText = finalLetter + finalAccidental + newOctaveNum + restOfText
-
+      const newText = serializeNote(parsed, isLowercase)
       replacements.push([start, end, newText])
     })
 
@@ -109,12 +102,8 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
     let endAdjustment = 0
     for (const [start, end, newText] of replacements) {
       const lengthDelta = newText.length - (end - start)
-      if (start < selStart) {
-        startAdjustment += lengthDelta
-      }
-      if (start < selEnd) {
-        endAdjustment += lengthDelta
-      }
+      if (start < selStart) startAdjustment += lengthDelta
+      if (start < selEnd) endAdjustment += lengthDelta
     }
 
     // Apply replacements
@@ -131,12 +120,75 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
     onChange(newLmlText)
   }
 
+  const handleDurationChange = (delta: number) => {
+    // delta: +1 to increase duration, -1 to decrease
+    if (!songObj || !textareaRef.current) return
+
+    const textarea = textareaRef.current
+    const selStart = textarea.selectionStart
+    const selEnd = textarea.selectionEnd
+
+    const noteIndices = songObj.findNotesForSelection(selStart, selEnd)
+    if (noteIndices.size === 0) return
+
+    const lmlText = textarea.value
+    const replacements: [number, number, string][] = []
+
+    noteIndices.forEach(idx => {
+      const note = songObj[idx]
+      if (!note.sourceLocation) return
+
+      const [start, end] = note.sourceLocation
+      const oldText = lmlText.substring(start, end)
+
+      const parsed = parseNoteString(oldText)
+      if (!parsed) return
+
+      // Preserve original case
+      const isLowercase = parsed.name === parsed.name.toLowerCase()
+
+      // Step the duration
+      parsed.duration = stepDuration(parsed.duration, delta)
+
+      const newText = serializeNote(parsed, isLowercase)
+      replacements.push([start, end, newText])
+    })
+
+    // Sort in reverse order to preserve offsets when applying
+    replacements.sort((a, b) => b[0] - a[0])
+
+    // Calculate separate adjustments for selection start and end
+    let startAdjustment = 0
+    let endAdjustment = 0
+    for (const [start, end, newText] of replacements) {
+      const lengthDelta = newText.length - (end - start)
+      if (start < selStart) startAdjustment += lengthDelta
+      if (start < selEnd) endAdjustment += lengthDelta
+    }
+
+    // Apply replacements
+    let newLmlText = lmlText
+    for (const [start, end, newText] of replacements) {
+      newLmlText = newLmlText.slice(0, start) + newText + newLmlText.slice(end)
+    }
+
+    // Update textarea and restore selection
+    textarea.value = newLmlText
+    textarea.setSelectionRange(selStart + startAdjustment, selEnd + endAdjustment)
+
+    onChange(newLmlText)
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
       e.preventDefault()
       const direction = e.key === 'ArrowUp' ? 1 : -1
       const semitones = e.shiftKey ? 12 : 1
       handleTranspose(direction * semitones)
+    } else if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      e.preventDefault()
+      const delta = e.key === 'ArrowRight' ? 1 : -1
+      handleDurationChange(delta)
     }
   }
 
