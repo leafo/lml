@@ -151,6 +151,48 @@ describe("parse", () => {
       ])
     })
 
+    it("parses dotted note", () => {
+      assert.deepStrictEqual(stripLocations(parser.parse("c5.")), [
+        ["note", "C5", { dots: 1 }]
+      ])
+    })
+
+    it("parses double-dotted note", () => {
+      assert.deepStrictEqual(stripLocations(parser.parse("c5..")), [
+        ["note", "C5", { dots: 2 }]
+      ])
+    })
+
+    it("parses triple-dotted note", () => {
+      assert.deepStrictEqual(stripLocations(parser.parse("c5...")), [
+        ["note", "C5", { dots: 3 }]
+      ])
+    })
+
+    it("parses dotted note with duration multiplier", () => {
+      assert.deepStrictEqual(stripLocations(parser.parse("c5*2.")), [
+        ["note", "C5", { duration: 2, dots: 1 }]
+      ])
+    })
+
+    it("parses dotted note with duration divider", () => {
+      assert.deepStrictEqual(stripLocations(parser.parse("c5/2.")), [
+        ["note", "C5", { duration: 0.5, dots: 1 }]
+      ])
+    })
+
+    it("parses dotted note with start position", () => {
+      assert.deepStrictEqual(stripLocations(parser.parse("c5.@4")), [
+        ["note", "C5", { dots: 1, start: 4 }]
+      ])
+    })
+
+    it("parses dotted note with all modifiers", () => {
+      assert.deepStrictEqual(stripLocations(parser.parse("c+5*2..@4")), [
+        ["note", "C5", { sharp: true, duration: 2, dots: 2, start: 4 }]
+      ])
+    })
+
     it("converts lowercase to uppercase", () => {
       assert.deepStrictEqual(stripLocations(parser.parse("c5 D5 e5")), [
         ["note", "C5"],
@@ -188,6 +230,30 @@ describe("parse", () => {
     it("parses uppercase rest", () => {
       assert.deepStrictEqual(parser.parse("R"), [
         ["rest"]
+      ])
+    })
+
+    it("parses dotted rest", () => {
+      assert.deepStrictEqual(parser.parse("r."), [
+        ["rest", { dots: 1 }]
+      ])
+    })
+
+    it("parses double-dotted rest", () => {
+      assert.deepStrictEqual(parser.parse("r.."), [
+        ["rest", { dots: 2 }]
+      ])
+    })
+
+    it("parses dotted rest with duration", () => {
+      assert.deepStrictEqual(parser.parse("r2."), [
+        ["rest", { duration: 2, dots: 1 }]
+      ])
+    })
+
+    it("parses dotted rest with start position", () => {
+      assert.deepStrictEqual(parser.parse("r.@4"), [
+        ["rest", { dots: 1, start: 4 }]
       ])
     })
 
@@ -728,6 +794,46 @@ describe("load", () => {
       ])
     })
 
+    it("applies dotted note (1.5x)", () => {
+      const song = SongParser.load("c5. d5")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1.5),
+        new SongNote("D5", 1.5, 1)
+      ])
+    })
+
+    it("applies double-dotted note (1.75x)", () => {
+      const song = SongParser.load("c5.. d5")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1.75),
+        new SongNote("D5", 1.75, 1)
+      ])
+    })
+
+    it("applies triple-dotted note (1.875x)", () => {
+      const song = SongParser.load("c5... d5")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 1.875),
+        new SongNote("D5", 1.875, 1)
+      ])
+    })
+
+    it("applies dotted half note (2 * 1.5 = 3)", () => {
+      const song = SongParser.load("c5*2. d5")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 3),
+        new SongNote("D5", 3, 1)
+      ])
+    })
+
+    it("applies dotted eighth note (0.5 * 1.5 = 0.75)", () => {
+      const song = SongParser.load("c5/2. d5")
+      matchNotes([...song], [
+        new SongNote("C5", 0, 0.75),
+        new SongNote("D5", 0.75, 1)
+      ])
+    })
+
     it("applies duration divider with relative octave", () => {
       const song = SongParser.load("c/2 d/2 e/2 f/2")
       matchNotes([...song], [
@@ -787,6 +893,20 @@ describe("load", () => {
       const song = SongParser.load("r2 c5")
       matchNotes([...song], [
         new SongNote("C5", 2, 1)
+      ])
+    })
+
+    it("loads dotted rest", () => {
+      const song = SongParser.load("r. c5")
+      matchNotes([...song], [
+        new SongNote("C5", 1.5, 1)
+      ])
+    })
+
+    it("loads dotted rest with duration", () => {
+      const song = SongParser.load("r2. c5")
+      matchNotes([...song], [
+        new SongNote("C5", 3, 1)
       ])
     })
   })

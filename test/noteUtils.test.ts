@@ -72,6 +72,36 @@ describe("parseNoteString", () => {
     })
   })
 
+  it("parses dotted note", () => {
+    const result = parseNoteString("c5.")
+    assert.strictEqual(result?.name, "C")
+    assert.strictEqual(result?.octave, "5")
+    assert.strictEqual(result?.dots, 1)
+  })
+
+  it("parses double-dotted note", () => {
+    const result = parseNoteString("c5..")
+    assert.strictEqual(result?.dots, 2)
+  })
+
+  it("parses dotted note with duration", () => {
+    const result = parseNoteString("c5*2.")
+    assert.strictEqual(result?.duration, 2)
+    assert.strictEqual(result?.dots, 1)
+  })
+
+  it("parses note with all modifiers including dots", () => {
+    const result = parseNoteString("c+5*2..@1")
+    assert.deepStrictEqual(result, {
+      name: "C",
+      octave: "5",
+      accidental: "+",
+      duration: 2,
+      dots: 2,
+      start: 1,
+    })
+  })
+
   it("parses relative note (no octave)", () => {
     const result = parseNoteString("c")
     assert.strictEqual(result?.name, "C")
@@ -116,6 +146,21 @@ describe("serializeNote", () => {
     assert.strictEqual(result, "c5/4")
   })
 
+  it("serializes dotted note", () => {
+    const result = serializeNote({ name: "C", octave: "5", dots: 1 })
+    assert.strictEqual(result, "c5.")
+  })
+
+  it("serializes double-dotted note", () => {
+    const result = serializeNote({ name: "C", octave: "5", dots: 2 })
+    assert.strictEqual(result, "c5..")
+  })
+
+  it("serializes dotted note with duration", () => {
+    const result = serializeNote({ name: "C", octave: "5", duration: 2, dots: 1 })
+    assert.strictEqual(result, "c5*2.")
+  })
+
   it("serializes note with start position", () => {
     const result = serializeNote({ name: "C", octave: "5", start: 2 })
     assert.strictEqual(result, "c5@2")
@@ -145,6 +190,18 @@ describe("serializeNote", () => {
       start: 1,
     })
     assert.strictEqual(result, "c+5*2@1")
+  })
+
+  it("serializes note with all modifiers including dots", () => {
+    const result = serializeNote({
+      name: "C",
+      octave: "5",
+      accidental: "+",
+      duration: 2,
+      dots: 2,
+      start: 1,
+    })
+    assert.strictEqual(result, "c+5*2..@1")
   })
 })
 

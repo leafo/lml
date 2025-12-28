@@ -9,6 +9,15 @@ import { AutoChords, AutoChordsOptions } from "./auto-chords.js"
 const TICKS_PER_BEAT = 48
 
 /**
+ * Calculate the duration multiplier for dotted notes.
+ * 1 dot = 1.5x, 2 dots = 1.75x, 3 dots = 1.875x, etc.
+ * Formula: (2^(n+1) - 1) / 2^n
+ */
+function dottedMultiplier(dots: number): number {
+  return (Math.pow(2, dots + 1) - 1) / Math.pow(2, dots)
+}
+
+/**
  * Given a note name without octave (e.g., "C", "F#") and a reference pitch,
  * find the octave that places the note closest to the reference.
  */
@@ -56,6 +65,7 @@ function findClosestOctave(noteLetter: string, referencePitch: number): string {
 // AST node types from the PEG grammar
 export type NoteOpts = {
   duration?: number
+  dots?: number
   start?: number
   sharp?: boolean
   flat?: boolean
@@ -66,7 +76,7 @@ export type NoteOpts = {
 export type ASTNode =
   | ["frontmatter", string, string]
   | ["note", string, NoteOpts?]
-  | ["rest", { duration?: number; start?: number }?]
+  | ["rest", { duration?: number; dots?: number; start?: number }?]
   | ["keySignature", number, [number, number]]  // [command, count, sourceLocation]
   | ["timeSignature", number, number]
   | ["halfTime", number?]
@@ -270,6 +280,9 @@ export default class SongParser {
             if (noteOpts.duration) {
               durationTicks *= noteOpts.duration
             }
+            if (noteOpts.dots) {
+              durationTicks *= dottedMultiplier(noteOpts.dots)
+            }
 
             if (noteOpts.sharp) {
               hasAccidental = true
@@ -329,6 +342,9 @@ export default class SongParser {
 
             if (restTiming.duration) {
               durationTicks *= restTiming.duration
+            }
+            if (restTiming.dots) {
+              durationTicks *= dottedMultiplier(restTiming.dots)
             }
           }
 

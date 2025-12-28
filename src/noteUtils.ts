@@ -4,7 +4,8 @@ export interface ParsedNote {
   name: string          // "C", "D", etc. (uppercase)
   accidental?: '+' | '-' | '='
   octave?: string
-  duration?: number     // .N gives N, /N gives 1/N
+  duration?: number     // *N gives N, /N gives 1/N
+  dots?: number         // number of dots (1 = dotted, 2 = double-dotted, etc.)
   start?: number
 }
 
@@ -19,18 +20,21 @@ export function parseNoteString(noteStr: string): ParsedNote | null {
       flat?: boolean
       natural?: boolean
       duration?: number
+      dots?: number
       start?: number
     }]
 
     const [, noteName, opts] = result
 
-    return {
+    const parsed: ParsedNote = {
       name: noteName[0],  // Just the letter (already uppercase from grammar)
       octave: noteName.slice(1) || undefined,
       accidental: opts.sharp ? '+' : opts.flat ? '-' : opts.natural ? '=' : undefined,
       duration: opts.duration,
       start: opts.start,
     }
+    if (opts.dots) parsed.dots = opts.dots
+    return parsed
   } catch {
     return null
   }
@@ -53,6 +57,10 @@ export function serializeNote(note: ParsedNote, lowercase = true): string {
       result += `/${Math.round(1 / note.duration)}`
     }
     // duration === 1 or not set → no suffix
+  }
+
+  if (note.dots) {
+    result += '.'.repeat(note.dots)
   }
 
   if (note.start !== undefined) {

@@ -83,6 +83,15 @@ c*2 d d e*4        # c is 2 beats, d is 1 beat each, e is 4 beats
 c/2 d/2 e/4        # c and d are 0.5 beats, e is 0.25 beats
 ```
 
+Dotted notes use `.` after the duration. A dot adds half the note's value (1.5x), double-dot adds 1.75x, etc.
+
+```
+c.                 # dotted quarter: 1.5 beats
+c..                # double-dotted quarter: 1.75 beats
+c*2.               # dotted half: 3 beats (2 * 1.5)
+c/2.               # dotted eighth: 0.75 beats (0.5 * 1.5)
+```
+
 An explicit start position can be specified with `@` followed by the beat number. This places notes at absolute positions rather than sequentially.
 
 ```
