@@ -124,7 +124,7 @@ export default class SongParser {
 
   // convert song text to ast
   parse(songText: string): AST {
-    return peg.parse(songText)
+    return peg.parse(songText, { grammarSource: "input" })
   }
 
   // compile ast to song notes
