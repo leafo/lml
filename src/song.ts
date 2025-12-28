@@ -72,6 +72,7 @@ export class SongNoteList extends Array<SongNote> {
   clefs?: [number, string][]
   strings?: [number, string][]
   timeSignatures?: [number, number][]  // [beat_position, beats_per_measure][]
+  keySignatures?: [number, number, [number, number]][]  // [beat_position, count, sourceLocation][]
   trackName?: string
 
   private buckets?: Record<number, number[]>

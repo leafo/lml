@@ -23,6 +23,10 @@ const stripLocations = (ast: ASTNode[]): ASTNode[] => {
       }
       return node
     }
+    if (node[0] === "keySignature") {
+      const [type, count] = node
+      return [type, count]
+    }
     if (node[0] === "block") {
       return ["block", stripLocations(node[1])]
     }
@@ -200,19 +204,19 @@ describe("parse", () => {
 
   describe("key signatures", () => {
     it("parses key signature with no accidentals", () => {
-      assert.deepStrictEqual(parser.parse("ks0"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("ks0")), [
         ["keySignature", 0]
       ])
     })
 
     it("parses key signature with sharps", () => {
-      assert.deepStrictEqual(parser.parse("ks2"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("ks2")), [
         ["keySignature", 2]
       ])
     })
 
     it("parses key signature with flats", () => {
-      assert.deepStrictEqual(parser.parse("ks-4"), [
+      assert.deepStrictEqual(stripLocations(parser.parse("ks-4")), [
         ["keySignature", -4]
       ])
     })

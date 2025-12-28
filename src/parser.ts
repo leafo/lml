@@ -67,7 +67,7 @@ export type ASTNode =
   | ["frontmatter", string, string]
   | ["note", string, NoteOpts?]
   | ["rest", { duration?: number; start?: number }?]
-  | ["keySignature", number]
+  | ["keySignature", number, [number, number]]  // [command, count, sourceLocation]
   | ["timeSignature", number, number]
   | ["halfTime", number?]
   | ["doubleTime", number?]
@@ -336,7 +336,13 @@ export default class SongParser {
           break
         }
         case "keySignature": {
-          state.keySignature = new KeySignature(+command[1])
+          const [, count, sourceLocation] = command
+          state.keySignature = new KeySignature(count)
+
+          if (!song.keySignatures) {
+            song.keySignatures = []
+          }
+          song.keySignatures.push([state.position / TICKS_PER_BEAT, count, sourceLocation])
           break
         }
         case "timeSignature": {

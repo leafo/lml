@@ -250,7 +250,8 @@ function peg$parse(input, options) {
     return []
   }
   function peg$f4(mod) {
-    return ["keySignature", +mod]
+    let loc = location()
+    return ["keySignature", +mod, [loc.start.offset, loc.end.offset]]
   }
   function peg$f5(upper, lower) {
     return ["timeSignature", +upper, +lower]

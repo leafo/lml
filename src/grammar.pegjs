@@ -21,7 +21,8 @@ command
 
 keySignature
   = "ks" mod:$( "-"? [0-9]+) {
-    return ["keySignature", +mod]
+    let loc = location()
+    return ["keySignature", +mod, [loc.start.offset, loc.end.offset]]
   }
 
 timeSignature
