@@ -40,8 +40,8 @@ describe("parseNoteString", () => {
     assert.strictEqual(result?.octave, "5")
   })
 
-  it("parses note with dot duration", () => {
-    const result = parseNoteString("c5.2")
+  it("parses note with star duration", () => {
+    const result = parseNoteString("c5*2")
     assert.strictEqual(result?.name, "C")
     assert.strictEqual(result?.octave, "5")
     assert.strictEqual(result?.duration, 2)
@@ -62,7 +62,7 @@ describe("parseNoteString", () => {
   })
 
   it("parses note with all modifiers", () => {
-    const result = parseNoteString("c+5.2@1")
+    const result = parseNoteString("c+5*2@1")
     assert.deepStrictEqual(result, {
       name: "C",
       octave: "5",
@@ -84,13 +84,13 @@ describe("parseNoteString", () => {
   })
 
   it("parses 3-digit duration", () => {
-    const result = parseNoteString("c5.999")
+    const result = parseNoteString("c5*999")
     assert.strictEqual(result?.duration, 999)
   })
 
   it("rejects 4+ digit duration", () => {
     // 4-digit duration should fail to parse (only first 3 digits match)
-    assert.strictEqual(parseNoteString("c5.1234"), null)
+    assert.strictEqual(parseNoteString("c5*1234"), null)
     assert.strictEqual(parseNoteString("c5/1234"), null)
   })
 })
@@ -106,9 +106,9 @@ describe("serializeNote", () => {
     assert.strictEqual(result, "c+5")
   })
 
-  it("serializes note with dot duration", () => {
+  it("serializes note with star duration", () => {
     const result = serializeNote({ name: "C", octave: "5", duration: 2 })
-    assert.strictEqual(result, "c5.2")
+    assert.strictEqual(result, "c5*2")
   })
 
   it("serializes note with slash duration", () => {
@@ -144,7 +144,7 @@ describe("serializeNote", () => {
       duration: 2,
       start: 1,
     })
-    assert.strictEqual(result, "c+5.2@1")
+    assert.strictEqual(result, "c+5*2@1")
   })
 })
 

@@ -19,7 +19,7 @@ import SongParser from "@leafo/lml"
 const song = SongParser.load(`
   ks0 ts4/4
   c5 d e f
-  g.2 g.2
+  g*2 g*2
 `)
 
 // Access the notes
@@ -76,10 +76,10 @@ c d e f g a b c    # Ascending: c5 → c6
 c6 b a g f e d c   # Descending: c6 → c5
 ```
 
-Duration can be modified with `.` (multiply) or `/` (divide). The default duration is 1 beat.
+Duration can be modified with `*` (multiply) or `/` (divide). The default duration is 1 beat.
 
 ```
-c.2 d d e.4        # c is 2 beats, d is 1 beat each, e is 4 beats
+c*2 d d e*4        # c is 2 beats, d is 1 beat each, e is 4 beats
 c/2 d/2 e/4        # c and d are 0.5 beats, e is 0.25 beats
 ```
 
@@ -87,7 +87,7 @@ An explicit start position can be specified with `@` followed by the beat number
 
 ```
 c@0 d@4 e@8        # Notes at beats 0, 4, and 8
-c.2@0 d.2@2        # Duration 2, at beats 0 and 2
+c*2@0 d*2@2        # Duration 2, at beats 0 and 2
 ```
 
 Notes can be made sharp with `+`, flat with `-`, or natural with `=`:
@@ -124,7 +124,7 @@ c5 d e g3 a b
 Insert silence using the rest command `r`, optionally with a duration multiplier. Like notes, rests can also use `@` for explicit positioning.
 
 ```
-c r d.2
+c r d*2
 d r2 a
 r@4         # Rest at beat 4
 r2@4        # Rest with duration 2 at beat 4
@@ -140,7 +140,7 @@ Change the base duration using time commands. These take effect until the end of
 
 ```
 dt
-c d c d c d e.2
+c d c d c d e*2
 ```
 
 Time commands stack when repeated. You can also add a number to apply the effect multiple times:
@@ -162,8 +162,8 @@ c5 | e | g     # C major chord (c5 e5 g5)
 Two voices:
 
 ```
-| c5 g e.2
-| c4.2 f.2
+| c5 g e*2
+| c4*2 f*2
 ```
 
 ### Blocks
@@ -177,7 +177,7 @@ Blocks are delimited with `{` and `}`. They affect how commands work:
 ```
 {
   dt
-  c5 { dt e f } d.2 e g a c
+  c5 { dt e f } d*2 e g a c
 }
 |
 { ht g4 f }
@@ -190,12 +190,12 @@ The `m` command moves the position to the start of a measure boundary, useful fo
 ```
 m {
   | c5 c a g
-  | g4.4
+  | g4*4
 }
 
 m {
   | d5 d a e
-  | f4.4
+  | f4*4
 }
 ```
 
@@ -291,8 +291,8 @@ Note: The `m` command (see [Measures](#measures)) is used to align notes to meas
 The `$` command specifies a chord symbol for auto-chord generation:
 
 ```
-{$G c5.2 a d}
-{$Dm e f g.2}
+{$G c5*2 a d}
+{$Dm e f g*2}
 ```
 
 Supported chord types: `M`, `m`, `dim`, `dim7`, `dimM7`, `aug`, `augM7`, `M6`, `m6`, `M7`, `7`, `m7`, `m7b5`, `mM7`
@@ -340,8 +340,8 @@ c "hel" d "lo" e "world"
 Both single and double quotes are supported. Strings can span multiple lines:
 
 ```
-c.2 'First verse
-continues here' d.2
+c*2 'First verse
+continues here' d*2
 ```
 
 Escape sequences are supported: `\"`, `\'`, `\\`, `\n`.
@@ -454,7 +454,7 @@ m ts3/4 g a b
 # application will be delayed a measure:
 
 ts3/4
-m g.4       # extends 1 beat past 3-beat measure
+m g*4       # extends 1 beat past 3-beat measure
 ts4/4       # recorded at beat 4, but next measure starts at beat 3
 m a b c d
 

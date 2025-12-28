@@ -48,7 +48,7 @@ export function serializeNote(note: ParsedNote, lowercase = true): string {
 
   if (note.duration !== undefined) {
     if (note.duration >= 2 && Number.isInteger(note.duration)) {
-      result += `.${note.duration}`
+      result += `*${note.duration}`
     } else if (note.duration < 1 && note.duration > 0) {
       result += `/${Math.round(1 / note.duration)}`
     }

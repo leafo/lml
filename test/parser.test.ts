@@ -69,13 +69,13 @@ describe("parse", () => {
     })
 
     it("parses note with duration", () => {
-      assert.deepStrictEqual(stripLocations(parser.parse("a5.2")), [
+      assert.deepStrictEqual(stripLocations(parser.parse("a5*2")), [
         ["note", "A5", { duration: 2 }]
       ])
     })
 
     it("parses note with duration and start", () => {
-      assert.deepStrictEqual(stripLocations(parser.parse("f3.1@2")), [
+      assert.deepStrictEqual(stripLocations(parser.parse("f3*1@2")), [
         ["note", "F3", { duration: 1, start: 2 }]
       ])
     })
@@ -87,7 +87,7 @@ describe("parse", () => {
     })
 
     it("parses notes with timing information", () => {
-      assert.deepStrictEqual(stripLocations(parser.parse("g4 a5.1 b2 f3.1@2")), [
+      assert.deepStrictEqual(stripLocations(parser.parse("g4 a5*1 b2 f3*1@2")), [
         ["note", "G4"],
         ["note", "A5", { duration: 1 }],
         ["note", "B2"],
@@ -122,7 +122,7 @@ describe("parse", () => {
     })
 
     it("parses accidental with duration", () => {
-      assert.deepStrictEqual(stripLocations(parser.parse("c+5.2")), [
+      assert.deepStrictEqual(stripLocations(parser.parse("c+5*2")), [
         ["note", "C5", { sharp: true, duration: 2 }]
       ])
     })
@@ -192,7 +192,7 @@ describe("parse", () => {
     })
 
     it("parses notes and rests", () => {
-      assert.deepStrictEqual(stripLocations(parser.parse("g4.1 r2 a4.3 r b2")), [
+      assert.deepStrictEqual(stripLocations(parser.parse("g4*1 r2 a4*3 r b2")), [
         ["note", "G4", { duration: 1 }],
         ["rest", { duration: 2 }],
         ["note", "A4", { duration: 3 }],
@@ -690,8 +690,8 @@ describe("load", () => {
       const song = SongParser.load(`
         ks1
         b6 a6 g6 a6
-        b6 b6 b6.2
-        a6 a6 a6.2
+        b6 b6 b6*2
+        a6 a6 a6*2
       `)
 
       matchNotes([...song], [
@@ -713,7 +713,7 @@ describe("load", () => {
 
   describe("duration", () => {
     it("applies duration multiplier", () => {
-      const song = SongParser.load("c5.2 d5.4")
+      const song = SongParser.load("c5*2 d5*4")
       matchNotes([...song], [
         new SongNote("C5", 0, 2),
         new SongNote("D5", 2, 4)
@@ -763,7 +763,7 @@ describe("load", () => {
     })
 
     it("loads notes with explicit start position", () => {
-      const song = SongParser.load("c5.1@0 d5.1@4 e5.1@8")
+      const song = SongParser.load("c5*1@0 d5*1@4 e5*1@8")
       matchNotes([...song], [
         new SongNote("C5", 0, 1),
         new SongNote("D5", 4, 1),
@@ -850,11 +850,11 @@ describe("load", () => {
     it("sets position and time correctly when using half and double time", () => {
       const song = SongParser.load(`
         ht
-        a5.2
+        a5*2
         dt
-        b5.2
+        b5*2
         dt
-        c5.2
+        c5*2
         c5
         dt
         g5
@@ -904,9 +904,9 @@ describe("load", () => {
         ts3/4
         m0 {
           c5
-          d5.2
+          d5*2
           |
-          g4.3
+          g4*3
         }
 
         m1 {
@@ -932,9 +932,9 @@ describe("load", () => {
         ts6/8
         m0 {
           c5
-          d5.2
+          d5*2
           |
-          g4.3
+          g4*3
         }
 
         m1 {
@@ -1080,7 +1080,7 @@ describe("load", () => {
         {
           dt
           a5
-          a5.2
+          a5*2
         }
         g6
       `)
@@ -1407,9 +1407,9 @@ describe("load", () => {
     })
 
     it("notes extending past measure boundary don't push next measure", () => {
-      // g.5 extends 1 beat past the 4-beat measure, but the next measure
+      // g*5 extends 1 beat past the 4-beat measure, but the next measure
       // still starts at beat 4 (the boundary), not beat 5
-      const song = SongParser.load(`m g.5 m a`)
+      const song = SongParser.load(`m g*5 m a`)
       const notes = [...song]
       assert.strictEqual(notes[0].start, 0)
       assert.strictEqual(notes[0].duration, 5)
@@ -1423,10 +1423,10 @@ describe("load", () => {
       // the old time signature for measures that start before the recorded position.
       const song = SongParser.load(`
         ts3/4
-        m g.4
+        m g*4
 
         ts4/4
-        m a.4
+        m a*4
 
         ts2/2
         m g
@@ -1439,10 +1439,10 @@ describe("load", () => {
       assert.strictEqual(notes[2].start, 7)   // measure 2 (3 + 4 beats)
 
       // Time signatures are recorded at cursor position, not measure boundary
-      // ts4/4 is at beat 4 (where g.4 ended), not beat 3 (where measure 1 starts)
+      // ts4/4 is at beat 4 (where g*4 ended), not beat 3 (where measure 1 starts)
       assert.deepStrictEqual(song.timeSignatures, [
         [0, 3],  // ts3/4 at beat 0
-        [4, 4],  // ts4/4 at beat 4 (cursor position after g.4)
+        [4, 4],  // ts4/4 at beat 4 (cursor position after g*4)
         [7, 2],  // ts2/2 at beat 7
       ])
 
@@ -1550,7 +1550,7 @@ describe("load", () => {
     })
 
     it("parses relative note with duration", () => {
-      const song = SongParser.load("c4 d.2")
+      const song = SongParser.load("c4 d*2")
       matchNotes([...song], [
         new SongNote("C4", 0, 1),
         new SongNote("D4", 1, 2)
