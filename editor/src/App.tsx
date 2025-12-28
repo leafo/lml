@@ -101,11 +101,20 @@ export function App() {
         },
       })
     } catch (e) {
+      let errorMessage: string
+
+      // Use Peggy's format() method for nicely formatted errors with code context
+      if (e && typeof e === "object" && "format" in e && typeof e.format === "function") {
+        errorMessage = e.format([{ source: "input", text }])
+      } else {
+        errorMessage = e instanceof Error ? e.message : String(e)
+      }
+
       setParseResult({
         ast: null,
         song: null,
         songObj: null,
-        error: e instanceof Error ? e.message : String(e),
+        error: errorMessage,
         timing: null,
       })
     }
