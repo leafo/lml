@@ -1,6 +1,6 @@
 {
   "name": "@leafo/lml",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "LML (Leaf's Music Language) parser and music theory library",
   "type": "module",
   "main": "./dist/index.js",
