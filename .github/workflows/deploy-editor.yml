@@ -1,4 +1,4 @@
-name: Deploy Editor to GitHub Pages
+name: Deploy Editor and Docs to GitHub Pages
 
 on:
   push:
@@ -40,13 +40,22 @@ jobs:
         working-directory: editor
         run: npm run build
 
+      - name: Build TypeDoc documentation
+        run: npm run docs
+
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p _site/docs
+          cp -r editor/dist/* _site/
+          cp -r docs/* _site/docs/
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: editor
+          path: _site
 
   deploy:
     environment:

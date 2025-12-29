@@ -22,11 +22,14 @@
     "clean": "rm -rf dist src/grammar.js",
     "test": "node --import tsx --test 'test/**/*.test.ts'",
     "regenerate-expected": "node --import tsx scripts/regenerate-expected.ts",
-    "editor": "npm run dev --prefix editor"
+    "editor": "npm run dev --prefix editor",
+    "docs": "typedoc",
+    "docs:watch": "typedoc --watch"
   },
   "devDependencies": {
     "peggy": "^5.0.6",
     "tsx": "^4.21.0",
+    "typedoc": "^0.27.6",
     "typescript": "^5.3.0"
   },
   "keywords": [

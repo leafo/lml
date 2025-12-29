@@ -1,0 +1,13 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "name": "LML - Leaf's Music Language",
+  "readme": "README.md",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "includeVersion": true,
+  "navigationLinks": {
+    "Editor": "https://leafo.github.io/lml/",
+    "GitHub": "https://github.com/leafo/lml"
+  }
+}
