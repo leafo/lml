@@ -1,3 +1,8 @@
+/**
+ * @module @leafo/lml
+ * @document ../migration-guide.md
+ */
+
 // Main parser
 export { default as SongParser } from "./parser.js"
 export type { AST, ASTNode, NoteOpts, SongParserOptions } from "./parser.js"
