@@ -1684,6 +1684,32 @@ describe("load", () => {
       ])
     })
 
+    it("handles octave-wrapping accidentals (Cb, B#)", () => {
+      // Cb4 is enharmonically B3 (pitch 59), but should stay in octave 4
+      // B#3 is enharmonically C4 (pitch 60), but should stay in octave 3
+      const song = SongParser.load("c4 c- b b+")
+      matchNotes([...song], [
+        new SongNote("C4", 0, 1),
+        new SongNote("Cb4", 1, 1),
+        new SongNote("B3", 2, 1),
+        new SongNote("B#3", 3, 1)
+      ])
+    })
+
+    it("handles octave-wrapping accidentals with key signature", () => {
+      // Regression test: in ks2 (D major), explicit flats should preserve correct octave
+      // f- (Fb4) followed by c- (Cb4) should both be in octave 4
+      const song = SongParser.load("ks2\nf c f+ c+ f- c-")
+      matchNotes([...song], [
+        new SongNote("F#4", 0, 1),
+        new SongNote("C#4", 1, 1),
+        new SongNote("F#4", 2, 1),
+        new SongNote("C#4", 3, 1),
+        new SongNote("Fb4", 4, 1),
+        new SongNote("Cb4", 5, 1)
+      ])
+    })
+
     it("applies key signature to relative notes", () => {
       // D major (ks2) has F# and C#
       // From C#4 (pitch 61): F4 (pitch 65, 4 away) is closer than F3 (pitch 53, 8 away)

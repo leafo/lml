@@ -1,6 +1,6 @@
 // @ts-ignore - generated file
 import * as peg from "./grammar.js"
-import { parseNote, noteName, KeySignature, OFFSETS, OCTAVE_SIZE } from "./music.js"
+import { parseNote, KeySignature, OFFSETS, OCTAVE_SIZE } from "./music.js"
 import { MultiTrackSong, SongNote } from "./song.js"
 import { AutoChords, AutoChordsOptions } from "./auto-chords.js"
 
@@ -27,39 +27,36 @@ function findClosestOctave(noteLetter: string, referencePitch: number): string {
     throw new Error(`Invalid note letter: ${noteLetter}`)
   }
 
-  const [, letter, accidental] = match
-  let noteOffset = OFFSETS[letter] as number
+  const [, letter] = match
+  if (OFFSETS[letter] === undefined) {
+    throw new Error(`Invalid note letter: ${letter}`)
+  }
 
-  if (accidental === "#") noteOffset += 1
-  if (accidental === "b") noteOffset -= 1
+  // Find the reference note's octave (MIDI: C4 = 60)
+  const refOctave = Math.floor(referencePitch / OCTAVE_SIZE) - 1
 
-  // Normalize to 0-11 range (handles Cb = 11, B# = 0)
-  noteOffset = ((noteOffset % OCTAVE_SIZE) + OCTAVE_SIZE) % OCTAVE_SIZE
-
-  // Find the reference note's octave
-  const refOctave = Math.floor(referencePitch / OCTAVE_SIZE)
-
-  // Calculate pitches for octaves around the reference
-  let bestPitch = refOctave * OCTAVE_SIZE + noteOffset
+  // Calculate pitches for octaves around the reference using parseNote for spelling rules.
+  let bestOctave = refOctave
+  let bestPitch = parseNote(`${noteLetter}${refOctave}`)
   let bestDistance = Math.abs(bestPitch - referencePitch)
 
-  // Check octave below
-  const pitchBelow = (refOctave - 1) * OCTAVE_SIZE + noteOffset
+  const belowOctave = refOctave - 1
+  const pitchBelow = parseNote(`${noteLetter}${belowOctave}`)
   const distBelow = Math.abs(pitchBelow - referencePitch)
   if (distBelow < bestDistance) {
+    bestOctave = belowOctave
     bestPitch = pitchBelow
     bestDistance = distBelow
   }
 
-  // Check octave above
-  const pitchAbove = (refOctave + 1) * OCTAVE_SIZE + noteOffset
+  const aboveOctave = refOctave + 1
+  const pitchAbove = parseNote(`${noteLetter}${aboveOctave}`)
   const distAbove = Math.abs(pitchAbove - referencePitch)
   if (distAbove < bestDistance) {
-    bestPitch = pitchAbove
+    bestOctave = aboveOctave
   }
 
-  const finalOctave = Math.floor(bestPitch / OCTAVE_SIZE) - 1
-  return `${noteLetter}${finalOctave}`
+  return `${noteLetter}${bestOctave}`
 }
 
 // AST node types from the PEG grammar
