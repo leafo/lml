@@ -17,6 +17,7 @@ interface PianoRollProps {
   measures?: Measure[]
   highlightedNotes?: Set<number>
   onRenderTime?: (ms: number) => void
+  playheadBeat?: number | null
 }
 
 const NOTE_HEIGHT = 8
@@ -32,7 +33,7 @@ const TRACK_COLORS = [
   '#aa96da',  // purple (track 5)
 ]
 
-export const PianoRoll = memo(function PianoRoll({ tracks, measures, highlightedNotes, onRenderTime }: PianoRollProps) {
+export const PianoRoll = memo(function PianoRoll({ tracks, measures, highlightedNotes, onRenderTime, playheadBeat }: PianoRollProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [scrollOffset, setScrollOffset] = useState(0)
@@ -209,6 +210,19 @@ export const PianoRoll = memo(function PianoRoll({ tracks, measures, highlighted
       }
     }
 
+    // Draw playhead
+    if (playheadBeat != null) {
+      const x = LEFT_MARGIN + playheadBeat * beatWidth + scrollOffset
+      if (x >= LEFT_MARGIN && x <= rect.width) {
+        ctx.strokeStyle = '#e94560'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.moveTo(x, 0)
+        ctx.lineTo(x, drawHeight)
+        ctx.stroke()
+      }
+    }
+
     // Draw left margin legend (on top of everything)
     ctx.fillStyle = '#0f0f23'
     ctx.fillRect(0, 0, LEFT_MARGIN, drawHeight)
@@ -217,15 +231,15 @@ export const PianoRoll = memo(function PianoRoll({ tracks, measures, highlighted
     for (let p = minPitch; p <= maxPitch; p++) {
       const isC = p % 12 === 0
       if (isC) {
-        const y = drawHeight - (p - minPitch) * noteHeight
+        const y = drawHeight - (p - minPitch + 1) * noteHeight
         ctx.fillStyle = '#666'
         ctx.font = '10px monospace'
-        ctx.fillText(`C${Math.floor(p / 12)}`, 4, y + 4)
+        ctx.fillText(`C${Math.floor(p / 12) - 1}`, 4, y + 4)
       }
     }
 
     onRenderTime?.(performance.now() - start)
-  }, [tracks, measures, highlightedNotes, onRenderTime, scrollOffset])
+  }, [tracks, measures, highlightedNotes, onRenderTime, scrollOffset, playheadBeat])
 
   useEffect(() => {
     draw()

@@ -12,6 +12,7 @@ import {
 import { LmlInput, LmlInputHandle } from './components/LmlInput'
 import { OutputTabs } from './components/OutputTabs'
 import { PianoRoll } from './components/PianoRoll'
+import { usePlayback } from './hooks/usePlayback'
 
 const AUTO_CHORD_OPTIONS: { value: string; label: string; generator: typeof AutoChords | false }[] = [
   { value: "disabled", label: "Disabled", generator: false },
@@ -50,6 +51,10 @@ export function App() {
   }>({ ast: null, song: null, songObj: null, error: null, timing: null })
   const [canvasTime, setCanvasTime] = useState<number | null>(null)
   const [cursorPosition, setCursorPosition] = useState<[number, number]>([0, 0])
+
+  const { isPlaying, currentBeat, play, stop } = usePlayback({
+    songObj: parseResult.songObj,
+  })
 
   // Compute highlighted notes based on cursor position
   const highlightedNotes = useMemo(() => {
@@ -162,6 +167,13 @@ export function App() {
             ))}
           </select>
         </label>
+        <button
+          className="play-btn"
+          onClick={isPlaying ? stop : play}
+          disabled={!parseResult.songObj || parseResult.songObj.length === 0}
+        >
+          {isPlaying ? 'Stop' : 'Play'}
+        </button>
         {canvasTime != null && (
           <span className="canvas-timing">
             canvas: {canvasTime < 1 ? `${(canvasTime * 1000).toFixed(0)}µs` : `${canvasTime.toFixed(2)}ms`}
@@ -173,6 +185,7 @@ export function App() {
         measures={parseResult.song?.measures}
         highlightedNotes={highlightedNotes}
         onRenderTime={setCanvasTime}
+        playheadBeat={currentBeat}
       />
     </div>
   )
