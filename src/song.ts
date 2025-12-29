@@ -1,4 +1,4 @@
-import { parseNote, noteName, MIDDLE_C_PITCH, type ChordShapeName } from "./music.js"
+import { parseNote, noteName, MIDDLE_C_PITCH, transposeKeySignature, type ChordShapeName } from "./music.js"
 
 // note: C4, D#5, etc...
 // start: when note begins in beats
@@ -118,6 +118,30 @@ export class SongNoteList extends Array<SongNote> {
     this.forEach(note =>
       song.push(note.transpose(amount))
     )
+
+    // Copy metadata, transposing key signature
+    if (this.metadata) {
+      song.metadata = {
+        ...this.metadata,
+        keySignature: this.metadata.keySignature !== undefined
+          ? transposeKeySignature(this.metadata.keySignature, amount)
+          : undefined
+      }
+    }
+
+    // Transpose key signatures array
+    if (this.keySignatures) {
+      song.keySignatures = this.keySignatures.map(([beat, count, loc]) =>
+        [beat, transposeKeySignature(count, amount), loc]
+      )
+    }
+
+    // Reuse references to unchanged properties
+    song.timeSignatures = this.timeSignatures
+    song.clefs = this.clefs
+    song.strings = this.strings
+    song.autoChords = this.autoChords
+    song.trackName = this.trackName
 
     return song
   }
