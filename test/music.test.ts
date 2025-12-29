@@ -150,4 +150,108 @@ describe("KeySignature", () => {
     assert.strictEqual(fMajor.isSharp(), false)
     assert.strictEqual(fMajor.isFlat(), true)
   })
+
+  describe("convertNote", () => {
+    it("strips sharps implied by key signature", () => {
+      const gMajor = new KeySignature(1) // F#
+      assert.strictEqual(gMajor.convertNote("F#4"), "F4")
+      assert.strictEqual(gMajor.convertNote("F#5"), "F5")
+    })
+
+    it("keeps sharps not in key signature", () => {
+      const gMajor = new KeySignature(1) // F#
+      assert.strictEqual(gMajor.convertNote("C#4"), "C#4")
+      assert.strictEqual(gMajor.convertNote("G#4"), "G#4")
+    })
+
+    it("strips flats implied by key signature", () => {
+      const fMajor = new KeySignature(-1) // Bb
+      assert.strictEqual(fMajor.convertNote("Bb4"), "B4")
+      assert.strictEqual(fMajor.convertNote("Bb3"), "B3")
+    })
+
+    it("keeps flats not in key signature", () => {
+      const fMajor = new KeySignature(-1) // Bb
+      assert.strictEqual(fMajor.convertNote("Eb4"), "Eb4")
+      assert.strictEqual(fMajor.convertNote("Ab4"), "Ab4")
+    })
+
+    it("leaves notes without accidentals unchanged", () => {
+      const gMajor = new KeySignature(1)
+      assert.strictEqual(gMajor.convertNote("C4"), "C4")
+      assert.strictEqual(gMajor.convertNote("G4"), "G4")
+    })
+
+    it("handles C major (no accidentals)", () => {
+      const cMajor = new KeySignature(0)
+      assert.strictEqual(cMajor.convertNote("C4"), "C4")
+      assert.strictEqual(cMajor.convertNote("F#4"), "F#4")
+      assert.strictEqual(cMajor.convertNote("Bb4"), "Bb4")
+    })
+
+    it("handles keys with multiple accidentals", () => {
+      const dMajor = new KeySignature(2) // F#, C#
+      assert.strictEqual(dMajor.convertNote("F#4"), "F4")
+      assert.strictEqual(dMajor.convertNote("C#4"), "C4")
+      assert.strictEqual(dMajor.convertNote("G#4"), "G#4")
+
+      const bbMajor = new KeySignature(-2) // Bb, Eb
+      assert.strictEqual(bbMajor.convertNote("Bb4"), "B4")
+      assert.strictEqual(bbMajor.convertNote("Eb4"), "E4")
+      assert.strictEqual(bbMajor.convertNote("Ab4"), "Ab4")
+    })
+  })
+
+  describe("noteName", () => {
+    it("uses sharps for sharp keys (MIDI 60-72)", () => {
+      const gMajor = new KeySignature(1)
+      assert.strictEqual(gMajor.noteName(60), "C4")
+      assert.strictEqual(gMajor.noteName(61), "C#4")
+      assert.strictEqual(gMajor.noteName(62), "D4")
+      assert.strictEqual(gMajor.noteName(63), "D#4")
+      assert.strictEqual(gMajor.noteName(64), "E4")
+      assert.strictEqual(gMajor.noteName(65), "F4")
+      assert.strictEqual(gMajor.noteName(66), "F#4")
+      assert.strictEqual(gMajor.noteName(67), "G4")
+      assert.strictEqual(gMajor.noteName(68), "G#4")
+      assert.strictEqual(gMajor.noteName(69), "A4")
+      assert.strictEqual(gMajor.noteName(70), "A#4")
+      assert.strictEqual(gMajor.noteName(71), "B4")
+      assert.strictEqual(gMajor.noteName(72), "C5")
+    })
+
+    it("uses flats for flat keys (MIDI 60-72)", () => {
+      const fMajor = new KeySignature(-1)
+      assert.strictEqual(fMajor.noteName(60), "C4")
+      assert.strictEqual(fMajor.noteName(61), "Db4")
+      assert.strictEqual(fMajor.noteName(62), "D4")
+      assert.strictEqual(fMajor.noteName(63), "Eb4")
+      assert.strictEqual(fMajor.noteName(64), "E4")
+      assert.strictEqual(fMajor.noteName(65), "F4")
+      assert.strictEqual(fMajor.noteName(66), "Gb4")
+      assert.strictEqual(fMajor.noteName(67), "G4")
+      assert.strictEqual(fMajor.noteName(68), "Ab4")
+      assert.strictEqual(fMajor.noteName(69), "A4")
+      assert.strictEqual(fMajor.noteName(70), "Bb4")
+      assert.strictEqual(fMajor.noteName(71), "B4")
+      assert.strictEqual(fMajor.noteName(72), "C5")
+    })
+
+    it("defaults to sharps for C major (MIDI 60-72)", () => {
+      const cMajor = new KeySignature(0)
+      assert.strictEqual(cMajor.noteName(60), "C4")
+      assert.strictEqual(cMajor.noteName(61), "C#4")
+      assert.strictEqual(cMajor.noteName(62), "D4")
+      assert.strictEqual(cMajor.noteName(63), "D#4")
+      assert.strictEqual(cMajor.noteName(64), "E4")
+      assert.strictEqual(cMajor.noteName(65), "F4")
+      assert.strictEqual(cMajor.noteName(66), "F#4")
+      assert.strictEqual(cMajor.noteName(67), "G4")
+      assert.strictEqual(cMajor.noteName(68), "G#4")
+      assert.strictEqual(cMajor.noteName(69), "A4")
+      assert.strictEqual(cMajor.noteName(70), "A#4")
+      assert.strictEqual(cMajor.noteName(71), "B4")
+      assert.strictEqual(cMajor.noteName(72), "C5")
+    })
+  })
 })

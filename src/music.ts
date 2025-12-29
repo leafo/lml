@@ -344,6 +344,12 @@ export class KeySignature {
   /**
    * Returns the name of the major key (e.g., "G", "F", "Bb").
    * @returns Key name string
+   * @example
+   * new KeySignature(0).name()  // => "C"
+   * new KeySignature(1).name()  // => "G" (1 sharp)
+   * new KeySignature(2).name()  // => "D" (2 sharps)
+   * new KeySignature(-1).name() // => "F" (1 flat)
+   * new KeySignature(-2).name() // => "Bb" (2 flats)
    */
   name(): string {
     let offset = this.count + 1
@@ -402,8 +408,13 @@ export class KeySignature {
 
   /**
    * Converts a MIDI pitch to a note name with correct enharmonic spelling for this key.
+   * Uses sharps for sharp keys and flats for flat keys.
    * @param pitch - MIDI pitch number
    * @returns Note name string with appropriate accidentals for this key
+   * @example
+   * new KeySignature(1).noteName(61)  // => "C#4" (G major uses sharps)
+   * new KeySignature(-1).noteName(61) // => "Db4" (F major uses flats)
+   * new KeySignature(0).noteName(61)  // => "C#4" (C major defaults to sharps)
    */
   noteName(pitch: number): string {
     return noteName(pitch, !this.isFlat())
@@ -455,6 +466,28 @@ export class KeySignature {
       }
     }
 
+    return note
+  }
+
+  /**
+   * Converts a note with accidentals to its staff spelling in this key.
+   * This is the inverse of unconvertNote - it strips accidentals that are
+   * implied by the key signature.
+   * @param note - Note string with accidentals
+   * @returns Note string as it would appear on a staff with this key signature
+   * @example
+   * // In G major (1 sharp on F):
+   * new KeySignature(1).convertNote("F#4") // "F4" (sharp implied by key)
+   * new KeySignature(1).convertNote("C#4") // "C#4" (not in key, keep accidental)
+   * // In F major (1 flat on B):
+   * new KeySignature(-1).convertNote("Bb4") // "B4" (flat implied by key)
+   */
+  convertNote(note: string): string {
+    const accidental = this.accidentalsForNote(note)
+    if (accidental === null) {
+      // Note matches key signature, strip the accidental
+      return note.replace(/[#b]/, "")
+    }
     return note
   }
 
