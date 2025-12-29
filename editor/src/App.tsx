@@ -28,9 +28,9 @@ const DEFAULT_LML = `# title: Example Song
 ks0
 ts4/4
 
-c5 d5 e5 f5
-g5.2 a5 b5
-c6.4
+c5 d e f
+g*2 a b
+c*4
 `
 
 export function App() {
@@ -131,6 +131,7 @@ export function App() {
     <div className="app">
       <header className="header">
         <h1>LML Editor</h1>
+        <a href="./docs/" className="header-link">Docs</a>
       </header>
       <main className="main">
         <LmlInput

@@ -4,10 +4,43 @@
   padding: 0;
 }
 
+:root {
+  /* Backgrounds */
+  --bg-body: #1a1a2e;
+  --bg-panel: #16213e;
+  --bg-content: #0f0f23;
+
+  /* Borders */
+  --border-primary: #0f3460;
+
+  /* Text */
+  --text-primary: #eee;
+  --text-secondary: #ccc;
+  --text-muted: #aaa;
+  --text-dim: #888;
+  --text-dimmer: #666;
+  --text-placeholder: #555;
+  --text-white: #fff;
+
+  /* Accent */
+  --accent: #e94560;
+
+  /* Error */
+  --error: #ff6b6b;
+  --error-bg: rgba(255, 107, 107, 0.1);
+  --error-border: rgba(255, 107, 107, 0.3);
+
+  /* JSON syntax highlighting */
+  --json-key: #82aaff;
+  --json-string: #c3e88d;
+  --json-number: #f78c6c;
+  --json-boolean: #c792ea;
+}
+
 body {
   font-family: sans-serif;
-  background: #1a1a2e;
-  color: #eee;
+  background: var(--bg-body);
+  color: var(--text-primary);
   height: 100vh;
   overflow: hidden;
 }
@@ -24,14 +57,26 @@ body {
 
 .header {
   padding: 12px 20px;
-  background: #16213e;
-  border-bottom: 1px solid #0f3460;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.header-link:hover {
+  color: var(--accent);
 }
 
 .header h1 {
   font-size: 18px;
-  font-weight: 500;
-  color: #e94560;
+  color: var(--accent);
 }
 
 .main {
@@ -49,16 +94,16 @@ body {
 }
 
 .input-panel {
-  border-right: 1px solid #0f3460;
+  border-right: 1px solid var(--border-primary);
 }
 
 .panel-header {
   padding: 8px 16px;
   min-height: 42px;
-  background: #16213e;
-  border-bottom: 1px solid #0f3460;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-primary);
   font-size: 13px;
-  color: #aaa;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -73,7 +118,7 @@ body {
 .timing {
   font-size: 11px;
   font-family: monospace;
-  color: #666;
+  color: var(--text-dimmer);
 }
 
 .log-btn {
@@ -81,23 +126,23 @@ body {
   font-size: 11px;
   font-family: monospace;
   background: transparent;
-  border: 1px solid #0f3460;
+  border: 1px solid var(--border-primary);
   border-radius: 3px;
-  color: #666;
+  color: var(--text-dimmer);
   cursor: pointer;
 }
 
 .log-btn:hover {
-  background: #0f3460;
-  color: #ccc;
+  background: var(--border-primary);
+  color: var(--text-secondary);
 }
 
 .lml-textarea {
   flex: 1;
   padding: 16px;
-  background: #0f0f23;
+  background: var(--bg-content);
   border: none;
-  color: #ccc;
+  color: var(--text-secondary);
   font-family: monospace;
   font-size: 14px;
   line-height: 1.5;
@@ -106,7 +151,7 @@ body {
 }
 
 .lml-textarea::placeholder {
-  color: #555;
+  color: var(--text-placeholder);
 }
 
 .tabs {
@@ -117,102 +162,102 @@ body {
 .tab {
   padding: 4px 12px;
   background: transparent;
-  border: 1px solid #0f3460;
+  border: 1px solid var(--border-primary);
   border-radius: 4px;
-  color: #888;
+  color: var(--text-dim);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .tab:hover {
-  background: #0f3460;
-  color: #ccc;
+  background: var(--border-primary);
+  color: var(--text-secondary);
 }
 
 .tab.active {
-  background: #e94560;
-  border-color: #e94560;
-  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-white);
 }
 
 .output-content {
   flex: 1;
   overflow: auto;
   padding: 16px;
-  background: #0f0f23;
+  background: var(--bg-content);
   font-family: monospace;
   font-size: 13px;
   line-height: 1.6;
 }
 
 .error {
-  color: #ff6b6b;
+  color: var(--error);
   white-space: pre-wrap;
   padding: 12px;
-  background: rgba(255, 107, 107, 0.1);
+  background: var(--error-bg);
   border-radius: 4px;
-  border: 1px solid rgba(255, 107, 107, 0.3);
+  border: 1px solid var(--error-border);
 }
 
 /* JSON Tree Styles */
 .json-toggle {
   cursor: pointer;
   user-select: none;
-  color: #666;
+  color: var(--text-dimmer);
   margin-right: 4px;
   font-size: 10px;
 }
 
 .json-toggle:hover {
-  color: #e94560;
+  color: var(--accent);
 }
 
 .json-bracket {
-  color: #888;
+  color: var(--text-dim);
 }
 
 .json-key {
-  color: #82aaff;
+  color: var(--json-key);
   margin-right: 6px;
 }
 
 .json-string {
-  color: #c3e88d;
+  color: var(--json-string);
 }
 
 .json-number {
-  color: #f78c6c;
+  color: var(--json-number);
 }
 
 .json-boolean {
-  color: #c792ea;
+  color: var(--json-boolean);
 }
 
 .json-null,
 .json-undefined {
-  color: #666;
+  color: var(--text-dimmer);
   font-style: italic;
 }
 
 .json-index {
-  color: #666;
+  color: var(--text-dimmer);
   margin-right: 6px;
 }
 
 .json-comma {
-  color: #888;
+  color: var(--text-dim);
 }
 
 .json-collapsed {
-  color: #666;
+  color: var(--text-dimmer);
   cursor: pointer;
   font-style: italic;
   margin: 0 4px;
 }
 
 .json-collapsed:hover {
-  color: #e94560;
+  color: var(--accent);
 }
 
 .json-items {
@@ -236,8 +281,8 @@ body {
 /* Toolbar */
 .toolbar {
   padding: 8px 16px;
-  background: #16213e;
-  border-top: 1px solid #0f3460;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -246,7 +291,7 @@ body {
 }
 
 .canvas-timing {
-  color: #666;
+  color: var(--text-dimmer);
   font-size: 12px;
   font-family: monospace;
 }
@@ -256,33 +301,33 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 .toolbar select {
   padding: 4px 8px;
-  background: #0f0f23;
-  border: 1px solid #0f3460;
+  background: var(--bg-content);
+  border: 1px solid var(--border-primary);
   border-radius: 4px;
-  color: #ccc;
+  color: var(--text-secondary);
   font-size: 12px;
   cursor: pointer;
 }
 
 .toolbar select:hover {
-  border-color: #e94560;
+  border-color: var(--accent);
 }
 
 .toolbar select:focus {
   outline: none;
-  border-color: #e94560;
+  border-color: var(--accent);
 }
 
 /* Piano Roll */
 .piano-roll {
   height: 200px;
-  background: #0f0f23;
-  border-top: 1px solid #0f3460;
+  background: var(--bg-content);
+  border-top: 1px solid var(--border-primary);
   flex-shrink: 0;
 }
 
