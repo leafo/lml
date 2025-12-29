@@ -3,6 +3,116 @@ title: Migration Guide
 group: Guides
 ---
 
+# LML Migration Guide: v0.2 to v0.3
+
+This guide covers syntax changes from version 0.2 to 0.3. Version 0.3 introduces dotted durations and changes the duration operator.
+
+## Breaking Changes
+
+### 1. Duration Operator Changed from `.` to `*`
+
+The duration multiplier operator has changed from `.` to `*`. This frees up `.` for dotted rhythm notation.
+
+```
+# v0.2
+c.2        # duration 2
+c.4@8      # duration 4, start at beat 8
+
+# v0.3
+c*2        # duration 2
+c*4@8      # duration 4, start at beat 8
+```
+
+The division operator `/` remains unchanged:
+
+```
+c/2        # half a beat (0.5) - same in both versions
+```
+
+## New Features
+
+### 1. Dotted Durations
+
+Notes and rests can now use `.` for dotted rhythms. A dot adds half the note's value.
+
+```
+c.         # dotted quarter: 1.5 beats (1 + 0.5)
+c..        # double-dotted: 1.75 beats (1 + 0.5 + 0.25)
+c*2.       # dotted half: 3 beats (2 + 1)
+c/2.       # dotted eighth: 0.75 beats (0.5 + 0.25)
+```
+
+Rests also support dotting:
+
+```
+r.         # dotted rest: 1.5 beats
+r*2.       # dotted half rest: 3 beats
+r/2.       # dotted eighth rest: 0.75 beats
+```
+
+### 2. Dividing Rests
+
+Rests now support the `/` operator for fractional durations:
+
+```
+r/2        # half-beat rest (0.5 beats)
+r/4        # quarter-beat rest (0.25 beats)
+```
+
+## Quick Reference
+
+| Feature | v0.2 | v0.3 |
+|---------|------|------|
+| Duration multiply | `c.2` | `c*2` |
+| Duration divide | `c/2` | `c/2` (unchanged) |
+| Duration + position | `c.2@4` | `c*2@4` |
+| Dotted note | Not supported | `c.` |
+| Double-dotted | Not supported | `c..` |
+| Dotted with duration | Not supported | `c*2.` or `c/2.` |
+| Fractional rest | Not supported | `r/2` |
+| Dotted rest | Not supported | `r.` |
+
+## Migration Examples
+
+### Example 1: Simple Melody with Durations
+
+```
+# v0.2
+c5 d e f g.2 g.2
+
+# v0.3
+c5 d e f g*2 g*2
+```
+
+### Example 2: Mixed Durations
+
+```
+# v0.2
+c5.2 d e.4 f/2
+
+# v0.3
+c5*2 d e*4 f/2
+```
+
+### Example 3: With Start Positions
+
+```
+# v0.2
+c5.2@0 e.2@0 g.2@0
+
+# v0.3
+c5*2@0 e*2@0 g*2@0
+```
+
+### Example 4: Using New Dotted Rhythms
+
+```
+# v0.3 only - dotted rhythms
+c. d/2 e.       # dotted quarter, eighth, dotted quarter
+c*2. d          # dotted half, quarter
+```
+
+---
 
 # LML Migration Guide: v0.1 to v0.2
 
