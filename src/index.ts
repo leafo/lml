@@ -29,6 +29,7 @@ export {
   compareNotes,
   notesLessThan,
   notesGreaterThan,
+  transposeKeySignature,
 
   // Classes
   KeySignature,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
-import { SongNoteList, SongParser, parseNote, noteName, serializeNote, stepDuration } from '@leafo/lml'
+import { SongNoteList, SongParser, parseNote, noteName, serializeNote, stepDuration, transposeKeySignature, KeySignature } from '@leafo/lml'
 
 interface LmlInputProps {
   defaultValue: string
@@ -57,11 +57,25 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
     const selStart = textarea.selectionStart
     const selEnd = textarea.selectionEnd
 
-    const noteIndices = songObj.findNotesForSelection(selStart, selEnd)
-    if (noteIndices.size === 0) return
-
     const lmlText = textarea.value
     const replacements: [number, number, string][] = []
+
+    // Default to the song's current key signature for note spelling
+    const currentKsCount = songObj.metadata?.keySignature ?? 0
+    let keySignature = new KeySignature(currentKsCount)
+
+    // If a key signature is in the selection, transpose it and use that for spelling
+    const ksInSelection = songObj.findKeySignaturesForSelection(selStart, selEnd)
+    for (const [, currentCount, [start, end]] of ksInSelection) {
+      const newCount = transposeKeySignature(currentCount, semitones)
+      keySignature = new KeySignature(newCount)
+      if (newCount !== currentCount) {
+        replacements.push([start, end, `ks${newCount}`])
+      }
+    }
+
+    // Find and transpose notes, using key signature for spelling if available
+    const noteIndices = songObj.findNotesForSelection(selStart, selEnd)
 
     noteIndices.forEach(idx => {
       const note = songObj[idx]
@@ -77,17 +91,34 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
       const isLowercase = oldText[0] === oldText[0].toLowerCase()
 
       // Transpose using the already-computed note.note (which is normalized)
+      // Use key signature for correct enharmonic spelling
       const newPitch = parseNote(note.note) + semitones
-      const newNoteStr = noteName(newPitch)  // e.g., "C#5" or "D5"
+      const newNoteStr = keySignature.noteName(newPitch)
 
-      // Parse the new note name (letter, optional #, octave)
-      const newNoteMatch = newNoteStr.match(/^([A-G])(#)?(\d+)$/)
+      // Parse the new note name (letter, optional #/b, octave)
+      const newNoteMatch = newNoteStr.match(/^([A-G])([#b])?(\d+)$/)
       if (!newNoteMatch) return
-      const [, newBaseLetter, hasSharp, newOctaveNum] = newNoteMatch
+      const [, newBaseLetter, noteAccidental, newOctaveNum] = newNoteMatch
+
+      // Determine what accidental to write based on key signature
+      // accidentalsForNote returns: null (no accidental needed), 0 (natural), 1 (sharp), -1 (flat)
+      const neededAccidental = keySignature.accidentalsForNote(newNoteStr)
+      let lmlAccidental: string | undefined
+      if (neededAccidental === null) {
+        // Note fits the key signature, no accidental needed
+        lmlAccidental = undefined
+      } else if (neededAccidental === 0) {
+        // Natural needed
+        lmlAccidental = '='
+      } else if (noteAccidental === '#') {
+        lmlAccidental = '+'
+      } else if (noteAccidental === 'b') {
+        lmlAccidental = '-'
+      }
 
       // Update parsed note with new pitch info
       parsed.name = isLowercase ? newBaseLetter.toLowerCase() : newBaseLetter
-      parsed.accidental = hasSharp ? '+' : undefined
+      parsed.accidental = lmlAccidental
       parsed.octave = newOctaveNum
 
       const newText = serializeNote(parsed, isLowercase)

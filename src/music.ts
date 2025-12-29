@@ -473,6 +473,12 @@ export class KeySignature {
    * Converts a note with accidentals to its staff spelling in this key.
    * This is the inverse of unconvertNote - it strips accidentals that are
    * implied by the key signature.
+   *
+   * Note: This only strips # or b accidentals. Notes without accidentals are
+   * returned unchanged. To determine if a natural sign is needed (e.g., F
+   * natural in D major), use {@link accidentalsForNote} which returns 0 when
+   * a natural is required.
+   *
    * @param note - Note string with accidentals
    * @returns Note string as it would appear on a staff with this key signature
    * @example
@@ -481,6 +487,8 @@ export class KeySignature {
    * new KeySignature(1).convertNote("C#4") // "C#4" (not in key, keep accidental)
    * // In F major (1 flat on B):
    * new KeySignature(-1).convertNote("Bb4") // "B4" (flat implied by key)
+   * // Notes without accidentals are unchanged:
+   * new KeySignature(2).convertNote("F4")  // "F4" (use accidentalsForNote to check if natural needed)
    */
   convertNote(note: string): string {
     const accidental = this.accidentalsForNote(note)
@@ -1298,4 +1306,23 @@ export class Staff {
     }
     return match[1]
   }
+}
+
+/**
+ * Transposes a key signature by a given number of semitones using circle of fifths.
+ * Each semitone = 7 steps on the circle of fifths (mod 12).
+ * @param currentKs - Current key signature count (positive = sharps, negative = flats)
+ * @param semitones - Number of semitones to transpose (positive = up, negative = down)
+ * @returns New key signature count, normalized to -6..5 range
+ * @example
+ * transposeKeySignature(0, 1)   // -5 (C major + 1 semitone = Db major)
+ * transposeKeySignature(1, 1)   // -4 (G major + 1 semitone = Ab major)
+ * transposeKeySignature(0, 12)  // 0  (octave transposition = no change)
+ */
+export function transposeKeySignature(currentKs: number, semitones: number): number {
+  if (semitones % 12 === 0) return currentKs  // Octave = no key change
+  let newKs = currentKs + (semitones * 7)
+  newKs = ((newKs % 12) + 12) % 12  // Normalize to 0..11
+  if (newKs > 6) newKs -= 12        // Normalize to -6..5
+  return newKs
 }

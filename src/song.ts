@@ -140,6 +140,14 @@ export class SongNoteList extends Array<SongNote> {
     return result
   }
 
+  // find key signatures that overlap with the given source position range
+  findKeySignaturesForSelection(start: number, end: number): [number, number, [number, number]][] {
+    if (!this.keySignatures) return []
+    return this.keySignatures.filter(([, , [ksStart, ksEnd]]) =>
+      start <= ksEnd && end >= ksStart
+    )
+  }
+
   getStopInBeats(): number {
     if (this.length == 0) { return 0 }
     return Math.max.apply(null, this.map((n) => n.getStop()))
