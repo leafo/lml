@@ -46,7 +46,8 @@ jobs:
       - name: Prepare deployment directory
         run: |
           mkdir -p _site/docs
-          cp -r editor/dist/* _site/
+          cp editor/index.html _site/
+          cp -r editor/dist _site/dist
           cp -r docs/* _site/docs/
 
       - name: Setup Pages
