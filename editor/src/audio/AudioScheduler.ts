@@ -19,6 +19,7 @@ export class AudioScheduler {
   private startTime: number = 0
   private schedulerInterval: number | null = null
   private nextNoteIndex: number = 0
+  private activeNodes: Set<{ oscillator: OscillatorNode; gain: GainNode }> = new Set()
 
   // Lookahead scheduling constants
   private readonly LOOKAHEAD = 0.1 // seconds to look ahead
@@ -64,6 +65,22 @@ export class AudioScheduler {
       clearInterval(this.schedulerInterval)
       this.schedulerInterval = null
     }
+
+    // Fade out active sounds quickly to avoid click/pop
+    const fadeTime = 0.015 // 15ms fade to avoid audible pop
+    const now = this.audioContext?.currentTime ?? 0
+
+    for (const node of this.activeNodes) {
+      try {
+        node.gain.gain.cancelScheduledValues(now)
+        node.gain.gain.setValueAtTime(node.gain.gain.value, now)
+        node.gain.gain.linearRampToValueAtTime(0, now + fadeTime)
+        node.oscillator.stop(now + fadeTime)
+      } catch {
+        // Ignore errors from already-stopped nodes
+      }
+    }
+    this.activeNodes.clear()
 
     this.nextNoteIndex = 0
   }
@@ -143,6 +160,14 @@ export class AudioScheduler {
 
     oscillator.connect(gainNode)
     gainNode.connect(this.audioContext.destination)
+
+    // Track active nodes for immediate stop capability
+    const nodeRef = { oscillator, gain: gainNode }
+    this.activeNodes.add(nodeRef)
+
+    oscillator.onended = () => {
+      this.activeNodes.delete(nodeRef)
+    }
 
     oscillator.start(startTime)
     oscillator.stop(startTime + duration)
