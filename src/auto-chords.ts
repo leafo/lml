@@ -5,17 +5,26 @@ import {
 
 import { SongNote, SongNoteList, MultiTrackSong } from "./song.js"
 
+/**
+ * @category AutoChords
+ */
 export interface AutoChordsOptions {
   rate?: number
   chordMinSpacing?: number
 }
 
+/**
+ * @category AutoChords
+ */
 export interface ChordBlock {
   start: number
   stop: number
   chord: [string, ChordShapeName]
 }
 
+/**
+ * @category AutoChords
+ */
 export class AutoChords {
   static defaultChords(song: MultiTrackSong, options?: AutoChordsOptions): AutoChords {
     return new BossaNovaAutoChords(song, options)
@@ -167,6 +176,9 @@ export class AutoChords {
   }
 }
 
+/**
+ * @category AutoChords
+ */
 export class RootAutoChords extends AutoChords {
   static override displayName = "Root"
 
@@ -186,6 +198,9 @@ export class RootAutoChords extends AutoChords {
   }
 }
 
+/**
+ * @category AutoChords
+ */
 export class TriadAutoChords extends AutoChords {
   static override displayName = "Triad"
 
@@ -207,6 +222,9 @@ export class TriadAutoChords extends AutoChords {
   }
 }
 
+/**
+ * @category AutoChords
+ */
 export class Root5AutoChords extends AutoChords {
   static override displayName = "Root+5"
 
@@ -243,6 +261,9 @@ export class Root5AutoChords extends AutoChords {
   }
 }
 
+/**
+ * @category AutoChords
+ */
 export class ArpAutoChords extends AutoChords {
   static override displayName = "Arp"
 
@@ -291,6 +312,9 @@ export class ArpAutoChords extends AutoChords {
   }
 }
 
+/**
+ * @category AutoChords
+ */
 export class BossaNovaAutoChords extends AutoChords {
   static override displayName = "Bossa Nova"
 

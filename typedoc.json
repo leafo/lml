@@ -6,6 +6,11 @@
   "excludePrivate": true,
   "excludeInternal": true,
   "includeVersion": true,
+  "categorizeByGroup": false,
+  "defaultCategory": "none",
+  "navigation": {
+    "includeCategories": true
+  },
   "navigationLinks": {
     "Editor": "https://leafo.github.io/lml/",
     "GitHub": "https://github.com/leafo/lml"
