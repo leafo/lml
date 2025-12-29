@@ -1,5 +1,5 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
-import { SongNoteList, parseNote, noteName, parseNoteString, serializeNote, stepDuration } from '@leafo/lml'
+import { SongNoteList, SongParser, parseNote, noteName, serializeNote, stepDuration } from '@leafo/lml'
 
 interface LmlInputProps {
   defaultValue: string
@@ -70,7 +70,7 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
       const [start, end] = note.sourceLocation
       const oldText = lmlText.substring(start, end)
 
-      const parsed = parseNoteString(oldText)
+      const parsed = SongParser.parseNote(oldText)
       if (!parsed) return
 
       // Preserve original case from source text
@@ -141,7 +141,7 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
       const [start, end] = note.sourceLocation
       const oldText = lmlText.substring(start, end)
 
-      const parsed = parseNoteString(oldText)
+      const parsed = SongParser.parseNote(oldText)
       if (!parsed) return
 
       // Preserve original case from source text

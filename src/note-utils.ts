@@ -1,44 +1,4 @@
-import { parse } from './grammar.js'
-
-export interface ParsedNote {
-  name: string          // "C", "D", etc. (uppercase)
-  accidental?: '+' | '-' | '='
-  octave?: string
-  duration?: number     // *N gives N, /N gives 1/N
-  dots?: number         // number of dots (1 = dotted, 2 = double-dotted, etc.)
-  start?: number
-}
-
-/**
- * Parse a note string using the grammar.
- * Returns null if parsing fails.
- */
-export function parseNoteString(noteStr: string): ParsedNote | null {
-  try {
-    const result = parse(noteStr, { startRule: 'note' }) as [string, string, {
-      sharp?: boolean
-      flat?: boolean
-      natural?: boolean
-      duration?: number
-      dots?: number
-      start?: number
-    }]
-
-    const [, noteName, opts] = result
-
-    const parsed: ParsedNote = {
-      name: noteName[0],  // Just the letter (already uppercase from grammar)
-      octave: noteName.slice(1) || undefined,
-      accidental: opts.sharp ? '+' : opts.flat ? '-' : opts.natural ? '=' : undefined,
-      duration: opts.duration,
-      start: opts.start,
-    }
-    if (opts.dots) parsed.dots = opts.dots
-    return parsed
-  } catch {
-    return null
-  }
-}
+import type { ParsedNote } from './parser.js'
 
 /**
  * Serialize a ParsedNote back to a string.

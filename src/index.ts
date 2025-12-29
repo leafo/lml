@@ -5,7 +5,7 @@
 
 // Main parser
 export { default as SongParser } from "./parser.js"
-export type { AST, ASTNode, NoteOpts, SongParserOptions } from "./parser.js"
+export type { AST, ASTNode, NoteOpts, SongParserOptions, ParsedNote } from "./parser.js"
 
 // Song types
 export { SongNote, SongNoteList, MultiTrackSong } from "./song.js"
@@ -60,6 +60,5 @@ export type { AutoChordsOptions, ChordBlock } from "./auto-chords.js"
 // Note list
 export { default as NoteList } from "./note-list.js"
 
-// Note utilities (for parsing/serializing individual notes)
-export { parseNoteString, serializeNote, stepDuration } from "./note-utils.js"
-export type { ParsedNote } from "./note-utils.js"
+// Note utilities (for serializing individual notes)
+export { serializeNote, stepDuration } from "./note-utils.js"

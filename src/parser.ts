@@ -4,22 +4,38 @@ import { parseNote, KeySignature, OFFSETS, OCTAVE_SIZE } from "./music.js"
 import { MultiTrackSong, SongNote } from "./song.js"
 import { AutoChords, AutoChordsOptions } from "./auto-chords.js"
 
-// 48 ticks per beat - divisible by 1,2,3,4,6,8,12,16,24,48
-// Allows exact representation of triplets, sixtuplets, etc.
+/**
+ * Internal tick resolution for timing calculations.
+ * 48 ticks per beat allows exact representation of common subdivisions
+ * including triplets, sixtuplets, and standard note values.
+ * Divisible by 1, 2, 3, 4, 6, 8, 12, 16, 24, 48.
+ */
 const TICKS_PER_BEAT = 48
 
 /**
- * Calculate the duration multiplier for dotted notes.
- * 1 dot = 1.5x, 2 dots = 1.75x, 3 dots = 1.875x, etc.
- * Formula: (2^(n+1) - 1) / 2^n
+ * Calculates the duration multiplier for dotted notes.
+ * Each dot adds half of the previous value to the note duration.
+ * @param dots - Number of dots (1, 2, 3, etc.)
+ * @returns Duration multiplier (1 dot = 1.5x, 2 dots = 1.75x, 3 dots = 1.875x)
+ * @example
+ * dottedMultiplier(1) // 1.5
+ * dottedMultiplier(2) // 1.75
+ * dottedMultiplier(3) // 1.875
  */
 function dottedMultiplier(dots: number): number {
   return (Math.pow(2, dots + 1) - 1) / Math.pow(2, dots)
 }
 
 /**
- * Given a note name without octave (e.g., "C", "F#") and a reference pitch,
- * find the octave that places the note closest to the reference.
+ * Finds the octave that places a note closest to a reference pitch.
+ * Used for relative note entry where the octave is inferred from context.
+ * @param noteLetter - Note name without octave (e.g., "C", "F#", "Bb")
+ * @param referencePitch - MIDI pitch number to stay close to
+ * @returns Full note name with octave (e.g., "C4", "F#5")
+ * @throws Error if noteLetter is not a valid note name
+ * @example
+ * findClosestOctave("G", 60) // "G4" (closest G to middle C)
+ * findClosestOctave("C", 67) // "C5" (closest C to G4)
  */
 function findClosestOctave(noteLetter: string, referencePitch: number): string {
   const match = noteLetter.match(/^([A-G])(#|b)?$/)
@@ -59,82 +75,229 @@ function findClosestOctave(noteLetter: string, referencePitch: number): string {
   return `${noteLetter}${bestOctave}`
 }
 
-// AST node types from the PEG grammar
+/**
+ * Options for a note AST node, specifying timing and accidentals.
+ */
 export type NoteOpts = {
+  /** Duration multiplier relative to current beat (e.g., 0.5 for half duration) */
   duration?: number
+  /** Number of dots extending the duration */
   dots?: number
+  /** Explicit start position in beats (using @ syntax) */
   start?: number
+  /** Note has explicit sharp accidental */
   sharp?: boolean
+  /** Note has explicit flat accidental */
   flat?: boolean
+  /** Note has explicit natural accidental */
   natural?: boolean
-  location?: [number, number]  // [startOffset, endOffset]
+  /** Source location as [startOffset, endOffset] in the input string */
+  location?: [number, number]
 }
 
+/**
+ * AST node types produced by the PEG grammar parser.
+ * Each node is a tuple with the command type as the first element.
+ */
 export type ASTNode =
+  /** Key-value metadata from YAML-style frontmatter */
   | ["frontmatter", string, string]
+  /** Musical note with name and optional timing/accidental options */
   | ["note", string, NoteOpts?]
+  /** Rest (silence) with optional duration */
   | ["rest", { duration?: number; dots?: number; start?: number }?]
-  | ["keySignature", number, [number, number]]  // [command, count, sourceLocation]
+  /** Key signature change: [command, accidental count, sourceLocation] */
+  | ["keySignature", number, [number, number]]
+  /** Time signature: [command, beats per measure, note value] */
   | ["timeSignature", number, number]
+  /** Halve tempo (double note durations), with optional repeat count */
   | ["halfTime", number?]
+  /** Double tempo (halve note durations), with optional repeat count */
   | ["doubleTime", number?]
+  /** Triple tempo (divide note durations by 3), with optional repeat count */
   | ["tripleTime", number?]
+  /** Measure marker, optionally with explicit measure number */
   | ["measure", number?]
+  /** Nested block of commands with isolated scope */
   | ["block", ASTNode[]]
+  /** Reset position to start of current block */
   | ["restoreStartPosition"]
+  /** Switch to a different track by number */
   | ["setTrack", number]
+  /** Set clef for the current track */
   | ["clef", string]
+  /** Chord macro for auto-chord generation */
   | ["macro", string]
+  /** Text annotation at current position */
   | ["string", string]
 
+/** Array of AST nodes representing a parsed song */
 export type AST = ASTNode[]
 
+/**
+ * Parsed representation of a single note string.
+ * Contains the note's components extracted from LML notation.
+ */
+export interface ParsedNote {
+  /** Note letter name (uppercase): "C", "D", etc. */
+  name: string
+  /** Accidental: '+' for sharp, '-' for flat, '=' for natural */
+  accidental?: '+' | '-' | '='
+  /** Octave number as string (e.g., "4", "5") */
+  octave?: string
+  /** Duration multiplier: *N gives N, /N gives 1/N */
+  duration?: number
+  /** Number of dots (1 = dotted, 2 = double-dotted, etc.) */
+  dots?: number
+  /** Explicit start position in beats (from @ syntax) */
+  start?: number
+}
+
+/**
+ * Internal state maintained during AST compilation.
+ * Tracks position, timing, key signature, and context for note processing.
+ */
 interface CompilerState {
-  startPosition: number      // in ticks
-  position: number           // in ticks
-  ticksPerNote: number       // base duration in ticks (default: TICKS_PER_BEAT)
-  ticksPerMeasure: number    // ticks per measure
-  timeScale: number          // duration multiplier (unchanged by tick conversion)
+  /** Start position of current block in ticks */
+  startPosition: number
+  /** Current playback position in ticks */
+  position: number
+  /** Base note duration in ticks (affected by time signature) */
+  ticksPerNote: number
+  /** Length of one measure in ticks */
+  ticksPerMeasure: number
+  /** Duration multiplier from halfTime/doubleTime/tripleTime commands */
+  timeScale: number
+  /** Current key signature for accidental handling */
   keySignature: KeySignature
+  /** Current track number for multi-track output */
   currentTrack: number
+  /** Last measure number encountered */
   lastMeasure: number
-  nextMeasureStart: number   // where the next auto-increment measure should start
-  explicitMeasureUsed: boolean  // track if last measure was explicit (affects nextMeasureStart updates)
+  /** Tick position where next auto-increment measure starts */
+  nextMeasureStart: number
+  /** Whether last measure command had explicit number */
+  explicitMeasureUsed: boolean
+  /** MIDI pitch of last note played (for relative octave) */
   lastNotePitch: number | null
+  /** Default MIDI pitch when no previous note exists */
   defaultPitch: number
 }
 
+/**
+ * Options for configuring the song parser and compiler.
+ */
 export interface SongParserOptions {
+  /** Custom AutoChords class, or false to disable auto-chord generation */
   autoChords?: typeof AutoChords | false
+  /** Configuration options passed to AutoChords */
   autoChordsSettings?: AutoChordsOptions
-  defaultOctave?: number  // Default octave for relative notes (default: 5)
+  /** Default octave for relative notes without octave number (default: 4) */
+  defaultOctave?: number
 }
 
-// tokens are separated by whitespace
-// a note is a5.1.2
-//   - 5 is the octave
-//   - 1 is the duration
-//   - 2 is the start
-//
-//   duration and start are optional
-//   duration defaults to 1 beat (or the current duration)
-//   start defaults to current cursor position
-
+/**
+ * Parser and compiler for the LML (Leafo Music Language) notation format.
+ * Converts text-based music notation into a MultiTrackSong with note and timing data.
+ *
+ * @example
+ * // Quick load from string
+ * const song = SongParser.load("C4 D4 E4 F4 G4")
+ *
+ * // Two-step parse and compile
+ * const parser = new SongParser()
+ * const ast = parser.parse("| C4 D4 E4 | F4 G4 A4 |")
+ * const song = parser.compile(ast)
+ *
+ * @example
+ * // Note syntax: noteName[octave][.duration][@start]
+ * // "C4"     - C in octave 4, default duration
+ * // "C4.2"   - C4 with duration of 2 beats
+ * // "C4@0"   - C4 starting at beat 0 (explicit position)
+ * // "C"      - C in closest octave to previous note
+ */
 export default class SongParser {
+  /** The PEG.js parser module for direct access to grammar */
   static peg = peg
 
+  /**
+   * Convenience method to parse and compile a song in one step.
+   * @param songText - LML notation string to parse
+   * @param opts - Optional parser configuration
+   * @returns Compiled MultiTrackSong
+   * @example
+   * const song = SongParser.load("| C4 D4 E4 | F4 G4 A4 |")
+   */
   static load(songText: string, opts?: SongParserOptions): MultiTrackSong {
     const parser = new SongParser()
     const ast = parser.parse(songText)
     return parser.compile(ast, opts)
   }
 
-  // convert song text to ast
+  /**
+   * Parses a single note string into its component parts.
+   * @param noteStr - Note string to parse (e.g., "c5", "c+5*2", "c5.")
+   * @returns ParsedNote object, or null if parsing fails
+   * @example
+   * SongParser.parseNote("c5")      // { name: "C", octave: "5" }
+   * SongParser.parseNote("c+5*2")   // { name: "C", accidental: "+", octave: "5", duration: 2 }
+   * SongParser.parseNote("c5.")     // { name: "C", octave: "5", dots: 1 }
+   * SongParser.parseNote("c5@2")    // { name: "C", octave: "5", start: 2 }
+   */
+  static parseNote(noteStr: string): ParsedNote | null {
+    try {
+      const result = peg.parse(noteStr, { startRule: 'note' }) as [string, string, {
+        sharp?: boolean
+        flat?: boolean
+        natural?: boolean
+        duration?: number
+        dots?: number
+        start?: number
+      }]
+
+      const [, noteName, opts] = result
+
+      const parsed: ParsedNote = {
+        name: noteName[0],  // Just the letter (already uppercase from grammar)
+        octave: noteName.slice(1) || undefined,
+        accidental: opts.sharp ? '+' : opts.flat ? '-' : opts.natural ? '=' : undefined,
+        duration: opts.duration,
+        start: opts.start,
+      }
+      if (opts.dots) parsed.dots = opts.dots
+      return parsed
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Parses LML notation text into an abstract syntax tree.
+   * @param songText - LML notation string to parse
+   * @returns Array of AST nodes representing the parsed song
+   * @throws SyntaxError if the input contains invalid syntax
+   * @example
+   * const parser = new SongParser()
+   * const ast = parser.parse("C4 D4 E4")
+   * // ast = [["note", "C", {...}], ["note", "D", {...}], ["note", "E", {...}]]
+   */
   parse(songText: string): AST {
     return peg.parse(songText, { grammarSource: "input" })
   }
 
-  // compile ast to song notes
+  /**
+   * Compiles an AST into a MultiTrackSong with note data.
+   * Processes all commands, resolves relative octaves, applies key signatures,
+   * and optionally generates auto-chords.
+   * @param ast - Abstract syntax tree from parse()
+   * @param opts - Optional compiler configuration
+   * @returns Compiled song with tracks, notes, and metadata
+   * @example
+   * const parser = new SongParser()
+   * const ast = parser.parse("$G | C D E | F G A |")
+   * const song = parser.compile(ast)
+   * // song.metadata.keySignature = 1 (G major)
+   */
   compile(ast: AST, opts?: SongParserOptions): MultiTrackSong {
     // Extract frontmatter from AST
     const frontmatter: Record<string, string> = {}
@@ -187,6 +350,12 @@ export default class SongParser {
     return song
   }
 
+  /**
+   * Recursively processes AST commands and updates song state.
+   * @param commands - Array of AST nodes to process
+   * @param state - Current compiler state (modified in place)
+   * @param song - Song being built (notes added to tracks)
+   */
   private compileCommands(commands: AST, state: CompilerState, song: MultiTrackSong): void {
     for (const command of commands) {
       const t = command[0]
