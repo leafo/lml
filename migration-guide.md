@@ -112,8 +112,6 @@ c. d/2 e.       # dotted quarter, eighth, dotted quarter
 c*2. d          # dotted half, quarter
 ```
 
----
-
 # LML Migration Guide: v0.1 to v0.2
 
 This guide helps you update LML music files from version 0.1 to 0.2. Version 0.2 introduces several syntax changes and new features that make writing music more concise.
