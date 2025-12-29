@@ -70,7 +70,7 @@ note
   }
 
 rest
-  = [rR] timing:restTiming ? {
+  = [rR_] timing:restTiming? {
     let rest = ["rest"]
     if (timing) { rest.push(timing) }
     return rest

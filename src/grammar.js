@@ -197,7 +197,7 @@ function peg$parse(input, options) {
   const peg$r5 = /^[gcfGCF]/;
   const peg$r6 = /^[a-gA-G]/;
   const peg$r7 = /^[+=\-]/;
-  const peg$r8 = /^[rR]/;
+  const peg$r8 = /^[rR_]/;
   const peg$r9 = /^[\t\r\n ]/;
   const peg$r10 = /^["\\]/;
   const peg$r11 = /^['\\]/;
@@ -220,7 +220,7 @@ function peg$parse(input, options) {
   const peg$e15 = peg$literalExpectation("|", false);
   const peg$e16 = peg$classExpectation([["a", "g"], ["A", "G"]], false, false, false);
   const peg$e17 = peg$classExpectation(["+", "=", "-"], false, false, false);
-  const peg$e18 = peg$classExpectation(["r", "R"], false, false, false);
+  const peg$e18 = peg$classExpectation(["r", "R", "_"], false, false, false);
   const peg$e19 = peg$literalExpectation("*", false);
   const peg$e20 = peg$literalExpectation(".", false);
   const peg$e21 = peg$literalExpectation("@", false);

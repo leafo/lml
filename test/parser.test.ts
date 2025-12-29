@@ -245,6 +245,18 @@ describe("parse", () => {
       ])
     })
 
+    it("parses underscore rest", () => {
+      assert.deepStrictEqual(parser.parse("_"), [
+        ["rest"]
+      ])
+    })
+
+    it("parses underscore rest with duration", () => {
+      assert.deepStrictEqual(parser.parse("_/2"), [
+        ["rest", { duration: 0.5 }]
+      ])
+    })
+
     it("parses dotted rest", () => {
       assert.deepStrictEqual(parser.parse("r."), [
         ["rest", { dots: 1 }]
