@@ -130,13 +130,18 @@ c5 d e g3 a b
 
 ### Rests
 
-Insert silence using the rest command `r`, optionally with a duration multiplier. Like notes, rests can also use `@` for explicit positioning.
+Insert silence using the rest command `r`, with the same duration modifiers as notes. Rests can use `*N` to multiply, `/N` to divide, `.` for dotting, and `@` for explicit positioning.
 
 ```
 c r d*2
 d r2 a
+r/2         # Half-beat rest (0.5 beats)
+r/4         # Quarter-beat rest (0.25 beats)
 r@4         # Rest at beat 4
 r2@4        # Rest with duration 2 at beat 4
+r.          # Dotted rest: 1.5 beats
+r2.         # Dotted rest with duration: 3 beats
+r/2.        # Dotted half-beat rest: 0.75 beats
 ```
 
 ### Time Commands

@@ -86,9 +86,9 @@ noteTiming
   }
 
 restTiming
-  = "*"? duration:($([0-9] |1..3|))? dots:($"."+)? start:("@" s:$[0-9]+ { return +s })? &{ return duration || dots || start !== null } {
+  = duration:("*"? d:$([0-9] |1..3|) { return +d } / "/" d:$([0-9] |1..3|) { return 1/+d })? dots:($"."+)? start:("@" s:$[0-9]+ { return +s })? &{ return duration !== null || dots || start !== null } {
     let timing = {}
-    if (duration) timing.duration = +duration
+    if (duration !== null) timing.duration = duration
     if (dots) timing.dots = dots.length
     if (start !== null) timing.start = start
     return timing

@@ -215,6 +215,18 @@ describe("parse", () => {
       ])
     })
 
+    it("parses rest with duration divider", () => {
+      assert.deepStrictEqual(parser.parse("r/2"), [
+        ["rest", { duration: 0.5 }]
+      ])
+    })
+
+    it("parses rest with duration divider by 4", () => {
+      assert.deepStrictEqual(parser.parse("r/4"), [
+        ["rest", { duration: 0.25 }]
+      ])
+    })
+
     it("parses rest with start position", () => {
       assert.deepStrictEqual(parser.parse("r@4"), [
         ["rest", { start: 4 }]
@@ -248,6 +260,12 @@ describe("parse", () => {
     it("parses dotted rest with duration", () => {
       assert.deepStrictEqual(parser.parse("r2."), [
         ["rest", { duration: 2, dots: 1 }]
+      ])
+    })
+
+    it("parses dotted rest with duration divider", () => {
+      assert.deepStrictEqual(parser.parse("r/2."), [
+        ["rest", { duration: 0.5, dots: 1 }]
       ])
     })
 
@@ -907,6 +925,20 @@ describe("load", () => {
       const song = SongParser.load("r2. c5")
       matchNotes([...song], [
         new SongNote("C5", 3, 1)
+      ])
+    })
+
+    it("loads rest with duration divider", () => {
+      const song = SongParser.load("r/2 c5")
+      matchNotes([...song], [
+        new SongNote("C5", 0.5, 1)
+      ])
+    })
+
+    it("loads dotted rest with duration divider", () => {
+      const song = SongParser.load("r/2. c5")
+      matchNotes([...song], [
+        new SongNote("C5", 0.75, 1)
       ])
     })
   })
