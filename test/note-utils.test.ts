@@ -2,14 +2,14 @@ import { describe, it } from "node:test"
 import assert from "node:assert"
 
 import {
-  parseNoteString,
+  SongParser,
   serializeNote,
   stepDuration,
 } from "../src/index.js"
 
-describe("parseNoteString", () => {
+describe("SongParser.parseNote", () => {
   it("parses simple note", () => {
-    const result = parseNoteString("c5")
+    const result = SongParser.parseNote("c5")
     assert.deepStrictEqual(result, {
       name: "C",
       octave: "5",
@@ -20,49 +20,49 @@ describe("parseNoteString", () => {
   })
 
   it("parses note with sharp accidental", () => {
-    const result = parseNoteString("c+5")
+    const result = SongParser.parseNote("c+5")
     assert.strictEqual(result?.name, "C")
     assert.strictEqual(result?.accidental, "+")
     assert.strictEqual(result?.octave, "5")
   })
 
   it("parses note with flat accidental", () => {
-    const result = parseNoteString("c-5")
+    const result = SongParser.parseNote("c-5")
     assert.strictEqual(result?.name, "C")
     assert.strictEqual(result?.accidental, "-")
     assert.strictEqual(result?.octave, "5")
   })
 
   it("parses note with natural accidental", () => {
-    const result = parseNoteString("c=5")
+    const result = SongParser.parseNote("c=5")
     assert.strictEqual(result?.name, "C")
     assert.strictEqual(result?.accidental, "=")
     assert.strictEqual(result?.octave, "5")
   })
 
   it("parses note with star duration", () => {
-    const result = parseNoteString("c5*2")
+    const result = SongParser.parseNote("c5*2")
     assert.strictEqual(result?.name, "C")
     assert.strictEqual(result?.octave, "5")
     assert.strictEqual(result?.duration, 2)
   })
 
   it("parses note with slash duration", () => {
-    const result = parseNoteString("c5/4")
+    const result = SongParser.parseNote("c5/4")
     assert.strictEqual(result?.name, "C")
     assert.strictEqual(result?.octave, "5")
     assert.strictEqual(result?.duration, 0.25)
   })
 
   it("parses note with start position", () => {
-    const result = parseNoteString("c5@2")
+    const result = SongParser.parseNote("c5@2")
     assert.strictEqual(result?.name, "C")
     assert.strictEqual(result?.octave, "5")
     assert.strictEqual(result?.start, 2)
   })
 
   it("parses note with all modifiers", () => {
-    const result = parseNoteString("c+5*2@1")
+    const result = SongParser.parseNote("c+5*2@1")
     assert.deepStrictEqual(result, {
       name: "C",
       octave: "5",
@@ -73,25 +73,25 @@ describe("parseNoteString", () => {
   })
 
   it("parses dotted note", () => {
-    const result = parseNoteString("c5.")
+    const result = SongParser.parseNote("c5.")
     assert.strictEqual(result?.name, "C")
     assert.strictEqual(result?.octave, "5")
     assert.strictEqual(result?.dots, 1)
   })
 
   it("parses double-dotted note", () => {
-    const result = parseNoteString("c5..")
+    const result = SongParser.parseNote("c5..")
     assert.strictEqual(result?.dots, 2)
   })
 
   it("parses dotted note with duration", () => {
-    const result = parseNoteString("c5*2.")
+    const result = SongParser.parseNote("c5*2.")
     assert.strictEqual(result?.duration, 2)
     assert.strictEqual(result?.dots, 1)
   })
 
   it("parses note with all modifiers including dots", () => {
-    const result = parseNoteString("c+5*2..@1")
+    const result = SongParser.parseNote("c+5*2..@1")
     assert.deepStrictEqual(result, {
       name: "C",
       octave: "5",
@@ -103,25 +103,25 @@ describe("parseNoteString", () => {
   })
 
   it("parses relative note (no octave)", () => {
-    const result = parseNoteString("c")
+    const result = SongParser.parseNote("c")
     assert.strictEqual(result?.name, "C")
     assert.strictEqual(result?.octave, undefined)
   })
 
   it("returns null for invalid input", () => {
-    assert.strictEqual(parseNoteString("xyz"), null)
-    assert.strictEqual(parseNoteString(""), null)
+    assert.strictEqual(SongParser.parseNote("xyz"), null)
+    assert.strictEqual(SongParser.parseNote(""), null)
   })
 
   it("parses 3-digit duration", () => {
-    const result = parseNoteString("c5*999")
+    const result = SongParser.parseNote("c5*999")
     assert.strictEqual(result?.duration, 999)
   })
 
   it("rejects 4+ digit duration", () => {
     // 4-digit duration should fail to parse (only first 3 digits match)
-    assert.strictEqual(parseNoteString("c5*1234"), null)
-    assert.strictEqual(parseNoteString("c5/1234"), null)
+    assert.strictEqual(SongParser.parseNote("c5*1234"), null)
+    assert.strictEqual(SongParser.parseNote("c5/1234"), null)
   })
 })
 
