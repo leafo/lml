@@ -1,4 +1,4 @@
-import { parseNote, noteName, MIDDLE_C_PITCH } from "./music.js"
+import { parseNote, noteName, MIDDLE_C_PITCH, type ChordShapeName } from "./music.js"
 
 // note: C4, D#5, etc...
 // start: when note begins in beats
@@ -68,7 +68,7 @@ export class SongNoteList extends Array<SongNote> {
   static bucketSize = 8 // bucket size in beats
 
   metadata?: SongMetadata
-  autoChords?: [number, [string, string]][]
+  autoChords?: [number, [string, ChordShapeName]][]
   clefs?: [number, string][]
   strings?: [number, string][]
   timeSignatures?: [number, number][]  // [beat_position, beats_per_measure][]

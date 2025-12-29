@@ -1,5 +1,6 @@
 import {
-  Chord, parseNote, noteName, addInterval, MIDDLE_C_PITCH, OCTAVE_SIZE
+  Chord, parseNote, noteName, addInterval, MIDDLE_C_PITCH, OCTAVE_SIZE,
+  type ChordShapeName
 } from "./music.js"
 
 import { SongNote, SongNoteList, MultiTrackSong } from "./song.js"
@@ -12,7 +13,7 @@ export interface AutoChordsOptions {
 export interface ChordBlock {
   start: number
   stop: number
-  chord: [string, string]
+  chord: [string, ChordShapeName]
 }
 
 export class AutoChords {
@@ -21,7 +22,7 @@ export class AutoChords {
   }
 
   // attempt to parse chord from macro name
-  static coerceChord(macro: string): [string, string] | undefined {
+  static coerceChord(macro: string): [string, ChordShapeName] | undefined {
     const m = macro.match(/([a-gA-G][#b]?)(.*)/)
     if (!m) { return }
     let [, root, shape] = m
@@ -32,11 +33,11 @@ export class AutoChords {
       shape = "M"
     }
 
-    if (!Chord.SHAPES[shape]) {
+    if (!(shape in Chord.SHAPES)) {
       return
     }
 
-    return [root, shape]
+    return [root, shape as ChordShapeName]
   }
 
   static allGenerators: (typeof AutoChords)[] = []
@@ -140,7 +141,7 @@ export class AutoChords {
     return noteName(chordRootPitch)
   }
 
-  notesForChord(_root: string, _shape: string, _blockStart: number, _blockStop: number): SongNote[] {
+  notesForChord(_root: string, _shape: ChordShapeName, _blockStart: number, _blockStop: number): SongNote[] {
     console.warn("Autochords doesn't generate any notes")
     return []
   }
@@ -169,7 +170,7 @@ export class AutoChords {
 export class RootAutoChords extends AutoChords {
   static override displayName = "Root"
 
-  notesForChord(root: string, _shape: string, blockStart: number, blockStop: number): SongNote[] {
+  notesForChord(root: string, _shape: ChordShapeName, blockStart: number, blockStop: number): SongNote[] {
     const maxPitch = this.minPitchInRange(blockStart, blockStop)
 
     const rate = this.options.rate || 1
@@ -188,7 +189,7 @@ export class RootAutoChords extends AutoChords {
 export class TriadAutoChords extends AutoChords {
   static override displayName = "Triad"
 
-  notesForChord(root: string, shape: string, blockStart: number, blockStop: number): SongNote[] {
+  notesForChord(root: string, shape: ChordShapeName, blockStart: number, blockStop: number): SongNote[] {
     const maxPitch = this.minPitchInRange(blockStart, blockStop)
     const chordRoot = this.rootBelow(root, maxPitch)
 
@@ -209,7 +210,7 @@ export class TriadAutoChords extends AutoChords {
 export class Root5AutoChords extends AutoChords {
   static override displayName = "Root+5"
 
-  notesForChord(root: string, shape: string, blockStart: number, blockStop: number): SongNote[] {
+  notesForChord(root: string, shape: ChordShapeName, blockStart: number, blockStop: number): SongNote[] {
     const maxPitch = this.minPitchInRange(blockStart, blockStop)
     let chordRoot = this.rootBelow(root, maxPitch)
     let chordNotes = Chord.notes(chordRoot, shape)
@@ -245,7 +246,7 @@ export class Root5AutoChords extends AutoChords {
 export class ArpAutoChords extends AutoChords {
   static override displayName = "Arp"
 
-  notesForChord(root: string, shape: string, blockStart: number, blockStop: number): SongNote[] {
+  notesForChord(root: string, shape: ChordShapeName, blockStart: number, blockStop: number): SongNote[] {
     const maxPitch = this.minPitchInRange(blockStart, blockStop)
     const chordRoot = this.rootBelow(root, maxPitch)
     const chordNotes = Chord.notes(chordRoot, shape)
@@ -293,7 +294,7 @@ export class ArpAutoChords extends AutoChords {
 export class BossaNovaAutoChords extends AutoChords {
   static override displayName = "Bossa Nova"
 
-  notesForChord(root: string, shape: string, blockStart: number, blockStop: number): SongNote[] {
+  notesForChord(root: string, shape: ChordShapeName, blockStart: number, blockStop: number): SongNote[] {
     const maxPitch = this.minPitchInRange(blockStart, blockStop)
     const chordRoot = this.rootBelow(root, maxPitch)
     const chordNotes = Chord.notes(chordRoot, shape)

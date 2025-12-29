@@ -1,6 +1,25 @@
+/**
+ * MIDI pitch value for middle C (C4).
+ * @example
+ * parseNote("C4") === MIDDLE_C_PITCH // true
+ */
 export const MIDDLE_C_PITCH = 60
+
+/**
+ * Number of semitones in an octave.
+ */
 export const OCTAVE_SIZE = 12
 
+/**
+ * Bidirectional mapping between note letters and their semitone offsets from C.
+ * Maps both directions: number -> letter name, and letter name -> number.
+ * Only includes natural notes (no sharps/flats).
+ * @example
+ * OFFSETS[0]   // "C"
+ * OFFSETS["C"] // 0
+ * OFFSETS[7]   // "G"
+ * OFFSETS["G"] // 7
+ */
 export const OFFSETS: Record<number | string, string | number> = {
   0: "C",
   2: "D",
@@ -19,6 +38,13 @@ export const OFFSETS: Record<number | string, string | number> = {
   "B": 11
 }
 
+/**
+ * Maps semitone offset (from C) to staff line position (0-6).
+ * Used for determining vertical placement on sheet music.
+ * @example
+ * LETTER_OFFSETS[0]  // 0 (C)
+ * LETTER_OFFSETS[7]  // 4 (G)
+ */
 export const LETTER_OFFSETS: Record<number, number> = {
   0: 0,
   2: 1,
@@ -29,7 +55,14 @@ export const LETTER_OFFSETS: Record<number, number> = {
   11: 6
 }
 
-export const NOTE_NAME_OFFSETS: Record<string, number> = {
+/**
+ * Maps note letter names to staff line position (0-6).
+ * C=0, D=1, E=2, F=3, G=4, A=5, B=6.
+ * @example
+ * NOTE_NAME_OFFSETS["C"] // 0
+ * NOTE_NAME_OFFSETS["G"] // 4
+ */
+export const NOTE_NAME_OFFSETS = {
   "C": 0,
   "D": 1,
   "E": 2,
@@ -37,8 +70,21 @@ export const NOTE_NAME_OFFSETS: Record<string, number> = {
   "G": 4,
   "A": 5,
   "B": 6,
-}
+} as const
 
+/** Valid note letter names (A through G) */
+export type NoteLetter = keyof typeof NOTE_NAME_OFFSETS
+
+/**
+ * Converts a MIDI pitch number to a note name string.
+ * @param pitch - MIDI pitch number (60 = middle C)
+ * @param sharpen - If true, use sharps for accidentals; if false, use flats
+ * @returns Note name with octave (e.g., "C4", "F#5", "Bb3")
+ * @example
+ * noteName(60)        // "C4"
+ * noteName(61)        // "C#4"
+ * noteName(61, false) // "Db4"
+ */
 export function noteName(pitch: number, sharpen = true): string {
   const octave = Math.floor(pitch / OCTAVE_SIZE) - 1
   const offset = pitch - (octave + 1) * OCTAVE_SIZE
@@ -93,6 +139,16 @@ function parseNoteOffset(note: string): number {
   return (n + 12) % 12 // wrap around for Cb and B#
 }
 
+/**
+ * Parses a note string into its MIDI pitch number.
+ * @param note - Note string with octave (e.g., "C4", "F#5", "Bb3")
+ * @returns MIDI pitch number (60 = middle C)
+ * @throws Error if note format is invalid
+ * @example
+ * parseNote("C4")  // 60
+ * parseNote("A4")  // 69
+ * parseNote("C#4") // 61
+ */
 export function parseNote(note: string): number {
   const parsed = note.match(/^([A-G])(#|b)?(\d+)$/)
 
@@ -119,55 +175,129 @@ export function parseNote(note: string): number {
   return n
 }
 
+/**
+ * Calculates the vertical staff position for a note.
+ * Used for positioning notes on sheet music.
+ * @param note - Note string with octave (e.g., "C4", "G5"); letter must be A-G
+ * @returns Staff offset value (higher = higher on staff)
+ * @throws Error if note format is invalid; invalid letters yield NaN
+ * @example
+ * noteStaffOffset("C4") // 28
+ * noteStaffOffset("D4") // 29
+ */
 export function noteStaffOffset(note: string): number {
   const match = note.match(/(\w)[#b]?(\d+)/)
   if (!match) { throw new Error("Invalid note") }
   const [, name, octave] = match
-  return +octave * 7 + NOTE_NAME_OFFSETS[name]
+  return +octave * 7 + NOTE_NAME_OFFSETS[name as NoteLetter]
 }
 
-// octaveless note comparison
+/**
+ * Compares two notes ignoring octave (enharmonic comparison).
+ * @param a - First note string (with or without octave)
+ * @param b - Second note string (with or without octave)
+ * @returns True if notes are the same pitch class
+ * @example
+ * notesSame("C4", "C5")   // true (same pitch class)
+ * notesSame("C#4", "Db4") // true (enharmonic)
+ * notesSame("C4", "D4")   // false
+ */
 export function notesSame(a: string, b: string): boolean {
   return parseNoteOffset(a) == parseNoteOffset(b)
 }
 
+/**
+ * Transposes a note by a given interval in semitones.
+ * @param note - Note string with octave (e.g., "C4")
+ * @param halfSteps - Number of semitones to transpose (positive = up, negative = down)
+ * @returns Transposed note string
+ * @example
+ * addInterval("C4", 2)  // "D4" (whole step up)
+ * addInterval("C4", 12) // "C5" (octave up)
+ * addInterval("C4", -1) // "B3" (half step down)
+ */
 export function addInterval(note: string, halfSteps: number): string {
   return noteName(parseNote(note) + halfSteps)
 }
 
-// returns 0 if notes are same
-// returns < 0 if a < b
-// returns > 0 if a > b
+/**
+ * Compares two notes and returns the difference in semitones.
+ * @param a - First note string with octave
+ * @param b - Second note string with octave
+ * @returns 0 if equal, negative if a < b, positive if a > b
+ * @example
+ * compareNotes("C4", "C4") // 0
+ * compareNotes("C4", "D4") // -2
+ * compareNotes("D4", "C4") // 2
+ */
 export function compareNotes(a: string, b: string): number {
   return parseNote(a) - parseNote(b)
 }
 
+/**
+ * Checks if the first note is lower than the second.
+ * @param a - First note string with octave
+ * @param b - Second note string with octave
+ * @returns True if a is lower than b
+ * @example
+ * notesLessThan("C4", "D4") // true
+ * notesLessThan("C5", "C4") // false
+ */
 export function notesLessThan(a: string, b: string): boolean {
   return compareNotes(a, b) < 0
 }
 
+/**
+ * Checks if the first note is higher than the second.
+ * @param a - First note string with octave
+ * @param b - Second note string with octave
+ * @returns True if a is higher than b
+ * @example
+ * notesGreaterThan("D4", "C4") // true
+ * notesGreaterThan("C4", "D4") // false
+ */
 export function notesGreaterThan(a: string, b: string): boolean {
   return compareNotes(a, b) > 0
 }
 
+/**
+ * Represents a musical key signature with a given number of sharps or flats.
+ * Positive count = sharps, negative count = flats, zero = C major/A minor.
+ * @example
+ * const gMajor = new KeySignature(1)  // G major (1 sharp)
+ * const fMajor = new KeySignature(-1) // F major (1 flat)
+ * gMajor.name() // "G"
+ * gMajor.accidentalNotes() // ["F"]
+ */
 export class KeySignature {
+  /** Circle of fifths note names */
   static FIFTHS = [
     "F", "C", "G", "D", "A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb"
   ]
 
+  /** Natural note names in order of fifths (for accidental calculation) */
   static FIFTHS_TRUNCATED = [
     "F", "C", "G", "D", "A", "E", "B"
   ]
 
   private static cache: KeySignature[] | null = null
 
-  // excludes the chromatic option
+  /**
+   * Returns all standard key signatures (excludes chromatic).
+   * Uses flat spellings for 6 accidentals (Gb instead of F#).
+   * @returns Array of KeySignature instances for standard major keys
+   */
   static allKeySignatures(): KeySignature[] {
     return [
       0, 1, 2, 3, 4, 5, -1, -2, -3, -4, -5, -6
     ].map(key => new KeySignature(key))
   }
 
+  /**
+   * Gets a cached KeySignature instance for the given accidental count.
+   * @param count - Number of accidentals (positive = sharps, negative = flats)
+   * @returns KeySignature instance, or undefined if count is out of range
+   */
   static forCount(count: number): KeySignature | undefined {
     if (!this.cache) {
       this.cache = this.allKeySignatures()
@@ -180,29 +310,41 @@ export class KeySignature {
     }
   }
 
+  /** Number of accidentals: positive = sharps, negative = flats, 0 = C major */
   count: number
 
-  // count: the number of accidentals in the key
+  /**
+   * Creates a new KeySignature.
+   * @param count - Number of accidentals (positive = sharps, negative = flats)
+   */
   constructor(count: number) {
     this.count = count
   }
 
+  /** Returns the number of accidentals in this key signature. */
   getCount(): number {
     return this.count
   }
 
+  /** Returns true if this is a chromatic key signature. */
   isChromatic(): boolean {
     return false
   }
 
+  /** Returns true if this key has sharps. */
   isSharp(): boolean {
     return this.count > 0
   }
 
+  /** Returns true if this key has flats. */
   isFlat(): boolean {
     return this.count < 0
   }
 
+  /**
+   * Returns the name of the major key (e.g., "G", "F", "Bb").
+   * @returns Key name string
+   */
   name(): string {
     let offset = this.count + 1
     if (offset < 0) {
@@ -212,21 +354,36 @@ export class KeySignature {
     return KeySignature.FIFTHS[offset]
   }
 
+  /** Returns the key name as a string. */
   toString(): string {
     return this.name()
   }
 
-  // the default scale root for building scales from key signature
+  /**
+   * Returns the root note for building scales from this key signature.
+   * @returns Note name (e.g., "G", "F")
+   */
   scaleRoot(): string {
     return this.name()
   }
 
-  // the scale used on the random note generator
+  /**
+   * Returns the default scale for this key signature.
+   * @returns A MajorScale rooted on this key
+   */
   defaultScale(): MajorScale {
     return new MajorScale(this)
   }
 
-  // convert note to enharmonic equivalent that fits into this key signature
+  /**
+   * Converts a note to its enharmonic equivalent that fits this key signature.
+   * Sharp keys convert flats to sharps; flat keys convert sharps to flats.
+   * @param note - Note string with octave
+   * @returns Enharmonic equivalent note string
+   * @example
+   * new KeySignature(1).enharmonic("Db4") // "C#4" (G major uses sharps)
+   * new KeySignature(-1).enharmonic("C#4") // "Db4" (F major uses flats)
+   */
   enharmonic(note: string): string {
     if (this.isFlat()) {
       if (note.indexOf("#") != -1) {
@@ -243,12 +400,22 @@ export class KeySignature {
     return note
   }
 
-  // Convert MIDI pitch to note name with correct enharmonic spelling for this key
+  /**
+   * Converts a MIDI pitch to a note name with correct enharmonic spelling for this key.
+   * @param pitch - MIDI pitch number
+   * @returns Note name string with appropriate accidentals for this key
+   */
   noteName(pitch: number): string {
     return noteName(pitch, !this.isFlat())
   }
 
-  // which notes have accidentals in this key
+  /**
+   * Returns the note letters that have accidentals in this key.
+   * @returns Array of note letters (e.g., ["F"] for G major, ["B", "E"] for Bb major)
+   * @example
+   * new KeySignature(1).accidentalNotes()  // ["F"] (F# in G major)
+   * new KeySignature(-2).accidentalNotes() // ["B", "E"] (Bb, Eb)
+   */
   accidentalNotes(): string[] {
     const fifths = KeySignature.FIFTHS_TRUNCATED
 
@@ -259,7 +426,12 @@ export class KeySignature {
     }
   }
 
-  // key note -> raw note
+  /**
+   * Converts a note without accidentals to its actual pitch in this key.
+   * For example, in G major, "F" becomes "F#".
+   * @param note - Note string or MIDI pitch
+   * @returns Note string with appropriate accidentals applied
+   */
   unconvertNote(note: string | number): string {
     if (this.count == 0) {
       return typeof note === "number" ? noteName(note) : note
@@ -286,12 +458,16 @@ export class KeySignature {
     return note
   }
 
-  // how many accidentals should display on note for this key
-  // null: nothing
-  // 0: a natural
-  // 1: a sharp
-  // -1: a flat
-  // 2: double sharp, etc.
+  /**
+   * Determines how many accidentals should display for a note in this key.
+   * @param note - Note string or MIDI pitch
+   * @returns null if no accidental needed, 0 for natural, 1 for sharp, -1 for flat, etc.
+   * @example
+   * // In G major (1 sharp on F):
+   * new KeySignature(1).accidentalsForNote("F#4") // null (already in key)
+   * new KeySignature(1).accidentalsForNote("F4")  // 0 (natural needed)
+   * new KeySignature(1).accidentalsForNote("C#4") // 1 (sharp not in key)
+   */
   accidentalsForNote(note: string | number): number | null {
     if (typeof note == "number") {
       note = noteName(note)
@@ -315,8 +491,13 @@ export class KeySignature {
     return null
   }
 
-  // the notes to give accidentals to within the range [min, max], the returned
-  // notes will not be sharp or flat
+  /**
+   * Returns the notes that need accidentals within a given pitch range.
+   * The returned notes are natural note names at specific octaves.
+   * @param min - Minimum note (string or MIDI pitch)
+   * @param max - Maximum note (string or MIDI pitch)
+   * @returns Array of note strings that need accidentals in this range
+   */
   notesInRange(min: string | number, max: string | number): string[] {
     if (this.count == 0) {
       return []
@@ -367,34 +548,59 @@ export class KeySignature {
   }
 }
 
+/**
+ * A special key signature for chromatic contexts where all 12 notes are equally valid.
+ * Renders as C major (no accidentals in the key signature) but allows all chromatic notes.
+ */
 export class ChromaticKeySignature extends KeySignature {
   constructor() {
     super(0) // render as c major
   }
 
+  /** Returns true (this is always a chromatic key signature). */
   isChromatic(): boolean {
     return true
   }
 
+  /** Returns "Chromatic" as the key name. */
   name(): string {
     return "Chromatic"
   }
 
+  /** Returns "C" as the scale root. */
   scaleRoot(): string {
     return "C"
   }
 
+  /** Returns a ChromaticScale as the default scale. */
   defaultScale(): ChromaticScale {
     return new ChromaticScale(this)
   }
 }
 
+/**
+ * Base class for musical scales. A scale is defined by a root note and
+ * a pattern of intervals (steps) in semitones.
+ * @example
+ * const cMajor = new MajorScale("C")
+ * cMajor.getRange(4, 8) // ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]
+ * cMajor.containsNote("D") // true
+ * cMajor.containsNote("Db") // false
+ */
 export class Scale {
+  /** Root note of the scale (e.g., "C", "G", "Bb") */
   root: string
+  /** Interval pattern in semitones (e.g., [2,2,1,2,2,2,1] for major) */
   steps: number[] = []
+  /** True if this is a minor scale (affects enharmonic spelling) */
   minor = false
+  /** True if this is a chromatic scale */
   chromatic = false
 
+  /**
+   * Creates a new Scale.
+   * @param root - Root note as string (e.g., "C") or KeySignature
+   */
   constructor(root: string | KeySignature) {
     if (root instanceof KeySignature) {
       root = root.scaleRoot()
@@ -407,10 +613,20 @@ export class Scale {
     this.root = root
   }
 
+  /**
+   * Returns all notes in the scale across 8 octaves.
+   * @returns Array of note strings covering the full playable range
+   */
   getFullRange(): string[] {
     return this.getRange(0, (this.steps.length + 1) * 8)
   }
 
+  /**
+   * Returns scale notes within a pitch range (inclusive).
+   * @param min - Minimum note string (e.g., "C3")
+   * @param max - Maximum note string (e.g., "C6")
+   * @returns Array of scale notes within the range
+   */
   getLooseRange(min: string, max: string): string[] {
     const fullRange = this.getFullRange()
     const minPitch = parseNote(min)
@@ -421,6 +637,16 @@ export class Scale {
     })
   }
 
+  /**
+   * Returns a range of notes from the scale starting at a given octave.
+   * @param octave - Starting octave number
+   * @param count - Number of notes to return (default: one octave)
+   * @param offset - Scale degree offset (negative = start below root)
+   * @returns Array of note strings
+   * @example
+   * new MajorScale("C").getRange(4, 8)    // ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]
+   * new MajorScale("C").getRange(4, 3, 2) // ["E4", "F4", "G4"] (start from 3rd degree)
+   */
   getRange(octave: number, count: number = this.steps.length + 1, offset = 0): string[] {
     let current = parseNote(`${this.root}${octave}`)
     const isFlat = this.isFlat()
@@ -449,6 +675,11 @@ export class Scale {
     return range
   }
 
+  /**
+   * Determines if this scale should use flats for accidentals.
+   * Based on the circle of fifths position of the root.
+   * @returns True if the scale should use flats
+   */
   isFlat(): boolean {
     let idx = KeySignature.FIFTHS.indexOf(this.root)
 
@@ -474,6 +705,14 @@ export class Scale {
     return idx < 1 || idx > 6
   }
 
+  /**
+   * Checks if a note (any octave) belongs to this scale.
+   * @param note - Note string (with or without octave)
+   * @returns True if the note is in the scale
+   * @example
+   * new MajorScale("C").containsNote("D")  // true
+   * new MajorScale("C").containsNote("Db") // false
+   */
   containsNote(note: string): boolean {
     let pitch = parseNoteOffset(note)
     const rootPitch = parseNoteOffset(this.root)
@@ -502,7 +741,15 @@ export class Scale {
     return false
   }
 
-  // degrees are 1 indexed
+  /**
+   * Converts a scale degree number to a note name (without octave).
+   * Degrees are 1-indexed: 1 = root, 2 = second, etc.
+   * @param degree - Scale degree (1-indexed)
+   * @returns Note name string (e.g., "C", "D", "E")
+   * @example
+   * new MajorScale("C").degreeToName(1) // "C"
+   * new MajorScale("C").degreeToName(5) // "G"
+   */
   degreeToName(degree: number): string {
     // truncate to reasonable range
     degree = (degree - 1) % this.steps.length + 1
@@ -513,7 +760,16 @@ export class Scale {
     return m ? m[0] : note
   }
 
-  // degrees are 1 indexed
+  /**
+   * Gets the scale degree of a note.
+   * Degrees are 1-indexed: root = 1, second = 2, etc.
+   * @param note - Note string (with or without octave)
+   * @returns Scale degree number
+   * @throws Error if note is not in the scale
+   * @example
+   * new MajorScale("C").getDegree("C") // 1
+   * new MajorScale("C").getDegree("G") // 5
+   */
   getDegree(note: string): number {
     let pitch = parseNoteOffset(note)
     const rootPitch = parseNoteOffset(this.root)
@@ -550,8 +806,15 @@ export class Scale {
     throw new Error(`${note} is not in scale ${this.root}`)
   }
 
-  // degree is one indexed
-  // new MajorScale().buildChordSteps(1, 2) -> major chord
+  /**
+   * Builds chord intervals by stacking thirds from a scale degree.
+   * @param degree - Starting scale degree (1-indexed)
+   * @param count - Number of intervals to generate (2 = triad, 3 = seventh chord)
+   * @returns Array of intervals in semitones
+   * @example
+   * new MajorScale("C").buildChordSteps(1, 2) // [4, 3] (C major triad intervals)
+   * new MajorScale("C").buildChordSteps(2, 2) // [3, 4] (D minor triad intervals)
+   */
   buildChordSteps(degree: number, count: number): number[] {
     let idx = degree - 1
     const out: number[] = []
@@ -573,7 +836,13 @@ export class Scale {
     return out
   }
 
-  // all chords with count notes
+  /**
+   * Generates all diatonic chords in this scale.
+   * @param noteCount - Number of notes per chord (3 = triads, 4 = seventh chords)
+   * @returns Array of Chord instances built on each scale degree
+   * @example
+   * new MajorScale("C").allChords(3) // [C, Dm, Em, F, G, Am, Bdim]
+   */
   allChords(noteCount = 3): Chord[] {
     const out: Chord[] = []
     for (let i = 0; i < this.steps.length; i++) {
@@ -587,6 +856,11 @@ export class Scale {
   }
 }
 
+/**
+ * Major scale with the interval pattern W-W-H-W-W-W-H (whole and half steps).
+ * @example
+ * new MajorScale("C").getRange(4, 8) // ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]
+ */
 export class MajorScale extends Scale {
   constructor(root: string | KeySignature) {
     super(root)
@@ -594,7 +868,11 @@ export class MajorScale extends Scale {
   }
 }
 
-// natural minor
+/**
+ * Natural minor scale (Aeolian mode) with pattern W-H-W-W-H-W-W.
+ * @example
+ * new MinorScale("A").getRange(4, 8) // ["A4", "B4", "C5", "D5", "E5", "F5", "G5", "A5"]
+ */
 export class MinorScale extends Scale {
   override minor = true
   constructor(root: string | KeySignature) {
@@ -603,6 +881,10 @@ export class MinorScale extends Scale {
   }
 }
 
+/**
+ * Harmonic minor scale with raised 7th degree.
+ * Pattern: W-H-W-W-H-A2-H (A2 = augmented second, 3 semitones).
+ */
 export class HarmonicMinorScale extends Scale {
   override minor = true
   constructor(root: string | KeySignature) {
@@ -611,6 +893,10 @@ export class HarmonicMinorScale extends Scale {
   }
 }
 
+/**
+ * Ascending melodic minor scale with raised 6th and 7th degrees.
+ * Pattern: W-H-W-W-W-W-H.
+ */
 export class AscendingMelodicMinorScale extends Scale {
   override minor = true
   constructor(root: string | KeySignature) {
@@ -619,23 +905,32 @@ export class AscendingMelodicMinorScale extends Scale {
   }
 }
 
+/**
+ * Major blues scale (6 notes).
+ * Notes in C: C, D, Eb, E, G, A.
+ */
 export class MajorBluesScale extends Scale {
   constructor(root: string | KeySignature) {
     super(root)
-    //  C, D, D#/Eb, E, G, A
     this.steps = [2, 1, 1, 3, 2, 3]
   }
 }
 
+/**
+ * Minor blues scale (6 notes).
+ * Notes in C: C, Eb, F, Gb, G, Bb.
+ */
 export class MinorBluesScale extends Scale {
   override minor = true
   constructor(root: string | KeySignature) {
     super(root)
-    // C, D#/Eb, F, F#/Gb, G, Bb
     this.steps = [3, 2, 1, 1, 3, 2]
   }
 }
 
+/**
+ * Chromatic scale containing all 12 semitones.
+ */
 export class ChromaticScale extends Scale {
   override chromatic = true
 
@@ -645,12 +940,31 @@ export class ChromaticScale extends Scale {
   }
 }
 
+/**
+ * Represents a musical chord as a special kind of scale.
+ * Chords are defined by a root note and interval pattern.
+ * @example
+ * const cMajor = new Chord("C", "M")
+ * cMajor.getRange(4, 3) // ["C4", "E4", "G4"]
+ * Chord.notes("C4", "m7") // ["C4", "Eb4", "G4", "Bb4"]
+ */
 export class Chord extends Scale {
-  static SHAPES: Record<string, number[]> = {
+  /**
+   * Predefined chord shapes as interval arrays (in semitones).
+   * - M: Major triad [4, 3]
+   * - m: Minor triad [3, 4]
+   * - dim: Diminished triad [3, 3]
+   * - aug: Augmented triad [4, 4]
+   * - 7: Dominant 7th [4, 3, 3]
+   * - M7: Major 7th [4, 3, 4]
+   * - m7: Minor 7th [3, 4, 3]
+   * - And more...
+   */
+  static SHAPES = {
     "M": [4, 3],
     "m": [3, 4],
 
-    "dim": [3, 3], // diminished
+    "dim": [3, 3],
     "dimM7": [3, 3, 5],
     "dim7": [3, 3, 3],
 
@@ -666,13 +980,23 @@ export class Chord extends Scale {
     "m7b5": [3, 3, 4],
     "mM7": [3, 4, 4],
 
-    // exotic
-    "Q": [5, 5], // quartal
+    "Q": [5, 5],
     "Qb4": [4, 5],
-  }
+  } as const
 
-  // Chord.notes("C5", "M", 1) -> first inversion C major chord
-  static notes(note: string, chordName: string, inversion = 0, notesCount = 0): string[] {
+  /**
+   * Static helper to get chord notes at a specific position.
+   * @param note - Root note with octave (e.g., "C4")
+   * @param chordName - Chord type from SHAPES (e.g., "M", "m7")
+   * @param inversion - Inversion number (0 = root position, 1 = first inversion, etc.)
+   * @param notesCount - Number of notes to return (0 = all chord tones)
+   * @returns Array of note strings
+   * @throws Error if note format is invalid or chordName is unknown
+   * @example
+   * Chord.notes("C4", "M")    // ["C4", "E4", "G4"]
+   * Chord.notes("C4", "M", 1) // ["E4", "G4", "C5"] (first inversion)
+   */
+  static notes(note: string, chordName: ChordShapeName, inversion = 0, notesCount = 0): string[] {
     const match = note.match(/^([^\d]+)(\d+)$/)
     if (!match) {
       throw new Error(`Invalid note format: ${note}`)
@@ -686,25 +1010,36 @@ export class Chord extends Scale {
       notesCount = intervals.length + 1
     }
 
-    return new Chord(root, intervals).getRange(octave, notesCount, inversion)
+    return new Chord(root, [...intervals]).getRange(octave, notesCount, inversion)
   }
 
-  constructor(root: string | KeySignature, intervals: string | number[]) {
+  /**
+   * Creates a new Chord.
+   * @param root - Root note as string (e.g., "C") or KeySignature
+   * @param intervals - Chord shape name (e.g., "M", "m7") or array of intervals in semitones
+   * @example
+   * new Chord("C", "M")      // C major from shape name
+   * new Chord("C", [4, 3])   // C major from intervals
+   */
+  constructor(root: string | KeySignature, intervals: ChordShapeName | readonly number[] | number[]) {
     super(root)
 
+    let steps: number[]
     if (typeof intervals === "string") {
       const shape = Chord.SHAPES[intervals]
       if (!shape) {
         throw new Error(`Unknown chord shape: ${intervals}`)
       }
-      intervals = shape
+      steps = [...shape]
+    } else {
+      steps = [...intervals]
     }
 
-    if (!intervals) {
+    if (!steps.length) {
       throw new Error("Missing intervals for chord")
     }
 
-    this.steps = [...intervals]
+    this.steps = steps
 
     // add wrapping interval to get back to octave
     let sum = 0
@@ -720,7 +1055,10 @@ export class Chord extends Scale {
     this.steps.push(rest)
   }
 
-  // is major or dom7 chord
+  /**
+   * Checks if this chord functions as a dominant (major or dominant 7th).
+   * @returns True if chord is major triad or dominant 7th
+   */
   isDominant(): boolean {
     const shapeName = this.chordShapeName()
     if (shapeName == "M" || shapeName == "7") {
@@ -730,8 +1068,13 @@ export class Chord extends Scale {
     return false
   }
 
-  // can point to a chord that's a 4th below (third above)
-  // the target chord can either be major or minor (2,3,5,6) in new key
+  /**
+   * Gets possible resolution targets for this chord as a secondary dominant.
+   * A secondary dominant resolves down a fifth (up a fourth).
+   * @param noteCount - Number of notes in target chords (3 = triads, 4 = sevenths)
+   * @returns Array of possible target Chords (major and minor variants)
+   * @throws Error if this chord is not a dominant type
+   */
   getSecondaryDominantTargets(noteCount = 3): Chord[] {
     if (!this.isDominant()) {
       throw new Error(`chord is not dominant to begin with: ${this.chordShapeName()}`)
@@ -746,19 +1089,23 @@ export class Chord extends Scale {
 
     // triads
     if (noteCount == 3) {
-      return ["M", "m"].map(quality => new Chord(newRoot, quality))
+      return (["M", "m"] as const).map(quality => new Chord(newRoot, quality))
     }
 
     // sevenths
     if (noteCount == 4) {
-      return ["M7", "m7"].map(quality => new Chord(newRoot, quality))
+      return (["M7", "m7"] as const).map(quality => new Chord(newRoot, quality))
     }
 
     throw new Error(`don't know how to get secondary dominant for note count: ${noteCount}`)
   }
 
-  chordShapeName(): string | undefined {
-    for (const shape in Chord.SHAPES) {
+  /**
+   * Gets the name of this chord's shape from SHAPES (e.g., "M", "m7", "dim").
+   * @returns Shape name string, or undefined if no matching shape found
+   */
+  chordShapeName(): ChordShapeName | undefined {
+    for (const shape of Object.keys(Chord.SHAPES) as ChordShapeName[]) {
       const intervals = Chord.SHAPES[shape]
       if (this.steps.length - 1 != intervals.length) {
         continue
@@ -778,7 +1125,14 @@ export class Chord extends Scale {
     }
   }
 
-  // do all the notes fit this chord
+  /**
+   * Checks if all given notes belong to this chord.
+   * @param notes - Array of note strings to check
+   * @returns True if all notes are chord tones
+   * @example
+   * new Chord("C", "M").containsNotes(["C4", "E4", "G4"]) // true
+   * new Chord("C", "M").containsNotes(["C4", "F4"]) // false
+   */
   containsNotes(notes: string[]): boolean {
     if (!notes.length) {
       return false
@@ -793,7 +1147,11 @@ export class Chord extends Scale {
     return true
   }
 
-  // how many notes do the two chords share
+  /**
+   * Counts how many notes two chords have in common.
+   * @param otherChord - Chord to compare with
+   * @returns Number of shared notes
+   */
   countSharedNotes(otherChord: Chord): number {
     const myNotes = this.getRange(5, this.steps.length)
     const theirNotes = otherChord.getRange(5, this.steps.length)
@@ -818,21 +1176,41 @@ export class Chord extends Scale {
     return count
   }
 
+  /**
+   * Returns the chord name as a string (e.g., "C", "Am7", "Bdim").
+   * @returns Chord name with root and quality
+   */
   toString(): string {
-    let name = this.chordShapeName()
-    if (!name) {
+    const shapeName = this.chordShapeName()
+    if (!shapeName) {
       console.warn("don't know name of chord", this.root, this.steps, this.getRange(5, 3))
-      name = ""
+      return this.root
     }
 
-    if (name == "M") { name = "" }
-    return `${this.root}${name}`
+    if (shapeName == "M") { return this.root }
+    return `${this.root}${shapeName}`
   }
 }
 
+/** Valid chord shape names from Chord.SHAPES */
+export type ChordShapeName = keyof typeof Chord.SHAPES
+
+/**
+ * Represents a musical staff with clef and note range information.
+ * Used for rendering notes on sheet music.
+ * @example
+ * const treble = Staff.forName("treble")
+ * treble.lowerNote // "E5" (bottom line)
+ * treble.upperNote // "F6" (top line)
+ */
 export class Staff {
   private static cache: Record<string, Staff> | null = null
 
+  /**
+   * Gets a Staff instance by name.
+   * @param name - Staff name ("treble" or "bass")
+   * @returns Staff instance, or undefined if not found
+   */
   static forName(name: string): Staff | undefined {
     if (!this.cache) {
       this.cache = Object.fromEntries(this.allStaves().map(s => [s.name, s]))
@@ -841,20 +1219,34 @@ export class Staff {
     return this.cache[name]
   }
 
+  /**
+   * Returns all available staff types.
+   * @returns Array of Staff instances
+   */
   static allStaves(): Staff[] {
+    // TODO: alto, middle C center
     return [
       new Staff("treble", "E5", "F6", "G5"),
       new Staff("bass", "G3", "A4", "F4")
-      // TODO: alto, middle C center
     ]
   }
 
+  /** Staff name (e.g., "treble", "bass") */
   name: string
+  /** Note on the bottom line of the staff */
   lowerNote: string
+  /** Note on the top line of the staff */
   upperNote: string
+  /** Note where the clef is positioned */
   clefNote: string
 
-  // upper and lower note are the notes for the lines on the top and bottom
+  /**
+   * Creates a new Staff.
+   * @param name - Staff identifier
+   * @param lowerNote - Note on bottom line (e.g., "E5" for treble)
+   * @param upperNote - Note on top line (e.g., "F6" for treble)
+   * @param clefNote - Note at clef position (e.g., "G5" for treble G-clef)
+   */
   constructor(name: string, lowerNote: string, upperNote: string, clefNote: string) {
     this.name = name
     this.lowerNote = lowerNote
@@ -862,7 +1254,10 @@ export class Staff {
     this.clefNote = clefNote
   }
 
-  // F, G, etc
+  /**
+   * Gets the letter name of the clef (e.g., "G" for treble, "F" for bass).
+   * @returns Single letter clef name
+   */
   clefName(): string {
     const match = this.clefNote.match(/^([A-G])/)
     if (!match) {

@@ -39,6 +39,7 @@ export {
   Chord,
   Staff,
 } from "./music.js"
+export type { NoteLetter, ChordShapeName } from "./music.js"
 
 // Auto chords
 export {
