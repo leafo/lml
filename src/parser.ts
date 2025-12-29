@@ -202,19 +202,12 @@ export interface SongParserOptions {
  *
  * @example
  * // Quick load from string
- * const song = SongParser.load("C4 D4 E4 F4 G4")
+ * const song = SongParser.load("c d e f g")
  *
  * // Two-step parse and compile
  * const parser = new SongParser()
- * const ast = parser.parse("| C4 D4 E4 | F4 G4 A4 |")
+ * const ast = parser.parse("c d e | f g a")
  * const song = parser.compile(ast)
- *
- * @example
- * // Note syntax: noteName[octave][.duration][@start]
- * // "C4"     - C in octave 4, default duration
- * // "C4.2"   - C4 with duration of 2 beats
- * // "C4@0"   - C4 starting at beat 0 (explicit position)
- * // "C"      - C in closest octave to previous note
  */
 export default class SongParser {
   /** The PEG.js parser module for direct access to grammar */
@@ -226,7 +219,7 @@ export default class SongParser {
    * @param opts - Optional parser configuration
    * @returns Compiled MultiTrackSong
    * @example
-   * const song = SongParser.load("| C4 D4 E4 | F4 G4 A4 |")
+   * const song = SongParser.load("c d e | f g a")
    */
   static load(songText: string, opts?: SongParserOptions): MultiTrackSong {
     const parser = new SongParser()
