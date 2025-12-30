@@ -13,6 +13,7 @@ import { LmlInput, LmlInputHandle } from './components/LmlInput'
 import { OutputTabs } from './components/OutputTabs'
 import { PianoRoll } from './components/PianoRoll'
 import { usePlayback } from './hooks/usePlayback'
+import { compress, decompress } from './compression'
 
 const AUTO_CHORD_OPTIONS: { value: string; label: string; generator: typeof AutoChords | false }[] = [
   { value: "disabled", label: "Disabled", generator: false },
@@ -34,9 +35,24 @@ g*2 a b
 c*4
 `
 
+// Get initial LML from URL hash or use default
+function getInitialLml(): string {
+  const hash = window.location.hash.slice(1)
+  if (hash) {
+    try {
+      return decompress(hash)
+    } catch (e) {
+      console.warn('Failed to decompress URL hash:', e)
+    }
+  }
+  return DEFAULT_LML
+}
+
 export function App() {
   const inputRef = useRef<LmlInputHandle>(null)
   const [autoChordType, setAutoChordType] = useState("Root5AutoChords")
+  const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'error'>('idle')
+  const [initialLml] = useState(getInitialLml)
   const [parseResult, setParseResult] = useState<{
     ast: unknown
     song: {
@@ -132,6 +148,25 @@ export function App() {
     }
   }, [autoChordType, handleChange])
 
+  // Handle share button click
+  const handleShare = useCallback(async () => {
+    if (!inputRef.current) return
+
+    try {
+      const lml = inputRef.current.getValue()
+      const compressed = compress(lml)
+      window.location.hash = compressed
+
+      await navigator.clipboard.writeText(window.location.href)
+      setShareStatus('copied')
+      setTimeout(() => setShareStatus('idle'), 2000)
+    } catch (e) {
+      console.error('Failed to share:', e)
+      setShareStatus('error')
+      setTimeout(() => setShareStatus('idle'), 2000)
+    }
+  }, [])
+
   return (
     <div className="app">
       <header className="header">
@@ -141,10 +176,12 @@ export function App() {
       <main className="main">
         <LmlInput
           ref={inputRef}
-          defaultValue={DEFAULT_LML}
+          defaultValue={initialLml}
           onChange={handleChange}
           onSelectionChange={setCursorPosition}
           songObj={parseResult.songObj}
+          onShare={handleShare}
+          shareStatus={shareStatus}
         />
         <OutputTabs
           ast={parseResult.ast}

@@ -6,6 +6,8 @@ interface LmlInputProps {
   onChange: (value: string) => void
   onSelectionChange?: (selection: [number, number]) => void
   songObj?: SongNoteList | null
+  onShare?: () => void
+  shareStatus?: 'idle' | 'copied' | 'error'
 }
 
 export interface LmlInputHandle {
@@ -13,7 +15,7 @@ export interface LmlInputHandle {
 }
 
 export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlInput(
-  { defaultValue, onChange, onSelectionChange, songObj },
+  { defaultValue, onChange, onSelectionChange, songObj, onShare, shareStatus },
   ref
 ) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -233,6 +235,11 @@ export const LmlInput = forwardRef<LmlInputHandle, LmlInputProps>(function LmlIn
     <div className="input-panel">
       <div className="panel-header">
         <span>LML Input</span>
+        {onShare && (
+          <button className="log-btn" onClick={onShare}>
+            {shareStatus === 'copied' ? 'Copied!' : shareStatus === 'error' ? 'Error' : 'Share'}
+          </button>
+        )}
       </div>
       <textarea
         ref={textareaRef}
