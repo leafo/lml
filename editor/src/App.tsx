@@ -13,6 +13,7 @@ import { LmlInput, LmlInputHandle } from './components/LmlInput'
 import { OutputTabs } from './components/OutputTabs'
 import { PianoRoll } from './components/PianoRoll'
 import { usePlayback } from './hooks/usePlayback'
+import { useHotkeys } from './hooks/useHotkeys'
 import { compress, decompress } from './compression'
 
 const AUTO_CHORD_OPTIONS: { value: string; label: string; generator: typeof AutoChords | false }[] = [
@@ -77,6 +78,42 @@ export function App() {
     if (!parseResult.songObj) return new Set<number>()
     return parseResult.songObj.findNotesForSelection(cursorPosition[0], cursorPosition[1])
   }, [cursorPosition[0], cursorPosition[1], parseResult.songObj])
+
+  // Get the earliest beat from selected notes (or 0 if none selected)
+  const getEarliestSelectedBeat = useCallback((): number => {
+    if (!parseResult.songObj || highlightedNotes.size === 0) {
+      return 0
+    }
+
+    let earliestBeat = Infinity
+    for (const idx of highlightedNotes) {
+      const note = parseResult.songObj[idx]
+      if (note && note.start < earliestBeat) {
+        earliestBeat = note.start
+      }
+    }
+
+    return earliestBeat === Infinity ? 0 : earliestBeat
+  }, [parseResult.songObj, highlightedNotes])
+
+  // Hotkey handlers
+  const handlePlayFromSelection = useCallback(() => {
+    if (!parseResult.songObj || parseResult.songObj.length === 0) return
+    const startBeat = getEarliestSelectedBeat()
+    play(startBeat)
+  }, [parseResult.songObj, getEarliestSelectedBeat, play])
+
+  const handleStopPlayback = useCallback(() => {
+    if (isPlaying) {
+      stop()
+    }
+  }, [isPlaying, stop])
+
+  // Register global hotkeys
+  useHotkeys([
+    { key: 'Escape', handler: handleStopPlayback },
+    { key: ' ', ctrlKey: true, handler: handlePlayFromSelection },
+  ])
 
   const handleChange = useCallback((text: string) => {
     try {

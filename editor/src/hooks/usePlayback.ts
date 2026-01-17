@@ -9,7 +9,7 @@ interface UsePlaybackOptions {
 interface UsePlaybackReturn {
   isPlaying: boolean
   currentBeat: number | null
-  play: () => void
+  play: (startBeat?: number) => void
   stop: () => void
 }
 
@@ -41,7 +41,7 @@ export function usePlayback({ songObj }: UsePlaybackOptions): UsePlaybackReturn 
     }
   }, [])
 
-  const play = useCallback(() => {
+  const play = useCallback((startBeat: number = 0) => {
     if (!songObj || songObj.length === 0) return
 
     const bpm = getBpm(songObj)
@@ -59,9 +59,9 @@ export function usePlayback({ songObj }: UsePlaybackOptions): UsePlaybackReturn 
     }))
 
     schedulerRef.current.setNotes(notes, bpm)
-    schedulerRef.current.play()
+    schedulerRef.current.play(startBeat)
     setIsPlaying(true)
-    setCurrentBeat(0)
+    setCurrentBeat(startBeat)
 
     // Start animation loop
     animationRef.current = requestAnimationFrame(updatePlayhead)

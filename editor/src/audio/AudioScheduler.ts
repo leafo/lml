@@ -34,7 +34,7 @@ export class AudioScheduler {
     this.bpm = bpm
   }
 
-  async play(): Promise<void> {
+  async play(startBeat: number = 0): Promise<void> {
     if (this._isPlaying) return
     if (this.notes.length === 0) return
 
@@ -48,8 +48,18 @@ export class AudioScheduler {
     }
 
     this._isPlaying = true
-    this.startTime = this.audioContext.currentTime
-    this.nextNoteIndex = 0
+
+    // Adjust startTime so getCurrentBeat() returns correct value relative to startBeat
+    const secondsPerBeat = 60 / this.bpm
+    this.startTime = this.audioContext.currentTime - (startBeat * secondsPerBeat)
+
+    // Find the first note at or after startBeat
+    this.nextNoteIndex = this.notes.findIndex(n => n.start >= startBeat)
+    if (this.nextNoteIndex === -1) {
+      // All notes are before startBeat, nothing to play
+      this._isPlaying = false
+      return
+    }
 
     // Start scheduler loop
     this.scheduleNotes()
